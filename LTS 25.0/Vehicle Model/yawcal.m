@@ -1,4 +1,5 @@
 %consider vehicle's limited yaw rate
+
 function [final_lsp,yaw_diagram] = yawcal(lsp,C2,maxsteer,L)
 len = length(lsp);
 final_lsp = lsp;

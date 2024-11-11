@@ -1,16 +1,13 @@
 %this function return velocity profile after considering car acceleration
-%this function DONT require acceleration function
-function accel_profile = accel_lsp_v2(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R,max_torque)
+function accel_profile = accel_lsp_v2(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R,max_torque,tc_long,sen_long)
 track_len = length(C2);
 accel_profile = zeros(track_len,1);
-slip_ang = slip_angle(C2);%row matrix slip_ang for this track
-%zero speed at the start
+slip_ang = slip_angle(C2); % estimate slip angle for this track
 
 for point = 1:(track_len-1)
     SA = slip_ang(point);%slip angle at this point
     vel = accel_profile(point); 
     curv = abs(1/C2(point));
-
     if curv > 30
         CL = CLs;
         CD = CDs;
@@ -22,9 +19,9 @@ for point = 1:(track_len-1)
     % Tyre maximum tractive force
     Reaction_f = 0.25*(mass*9.81+0.5*air_density*frontel_area*CL*vel^2);
     [~,Long,~] = tyres(camber,SA,Reaction_f,tyre_model);
-    Long = 4*0.67*Long;
+    Long = 4*tc_long*sen_long*Long;
     Drag = 0.5*air_density*(vel^2)*CD*frontel_area;%drag force at this speed
-    F_tyre = Long-Drag;
+    F_t= Long-Drag;
     
     % Powertrain maximum tractive force
     if vel<23.6298
@@ -35,7 +32,7 @@ for point = 1:(track_len-1)
     F_powertrain = torque*FDR/R;
 
     %calculate available acceleration remained
-    F = min(F_tyre,F_powertrain);
+    F = min(F_t,F_powertrain);
     avail_accel = F/mass; 
     
     %calculate max speed after accel
@@ -45,10 +42,8 @@ for point = 1:(track_len-1)
     if v_accel > BSP(point+1) 
         accel_profile(point+1) = BSP(point+1);                            
     else                
-       accel_profile(point+1) = v_accel; %full acceleration
-                           
-    end
-       
+       accel_profile(point+1) = v_accel; %full acceleration                           
+    end       
 end
 end
 

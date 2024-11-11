@@ -7,8 +7,8 @@
 % 2) Positive yaw in MOTEC is in clockwise direction
 
 % Load data, convert to SI unit, and calculate time step
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\LTS25\Track Model')
-load ('241013 JTC Endurance Motec.mat');
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 3301 Submission\Track Model')
+load ('24 Endurance Fastest Motec.mat');
 
 Corr_Speed.Value = Corr_Speed.Value * 1000 / 3600;
 G_Sensor_Front_Yaw_Rate.Value = G_Sensor_Front_Yaw_Rate.Value * pi / 180;
@@ -80,7 +80,7 @@ C2 = c2;
 pos.x = x;
 pos.y = y;
 
-save("241013 JTC PM.mat",'pos','C2','dist')
+save("24 Endurance Fastest.mat",'pos','C2','dist')
 
 clear x y C1 C3 c2 Dist i meshsize s size t vel theta
 

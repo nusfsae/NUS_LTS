@@ -3,22 +3,21 @@ close all
 clc
 
 %open LTS directory
-cd('C:\Users\Patri\OneDrive - National University of Singapore\Documents\NUS\Formula SAE\LTS 25.0')
-
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
 
 %open track model file
-cd('C:\Users\Patri\OneDrive - National University of Singapore\Documents\NUS\Formula SAE\LTS 25.0\Track Model')
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
 
-track = '241013 JTC PM'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM
+track = '241013 JTC PM'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m
 load(track)
 
 %open tire model file
 
-cd ('C:\Users\Patri\OneDrive - National University of Singapore\Documents\NUS\Formula SAE\LTS 25.0\Tyre Model')
+cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
 tyre = 'R25B_V2';
 load(tyre)
 
-cd('C:\Users\Patri\OneDrive - National University of Singapore\Documents\NUS\Formula SAE\LTS 25.0\Vehicle Model')
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -35,15 +34,20 @@ CDc = 1.469746;                            wheelbase = 1.531;                   
 camber = 0;                                frontel_area = 1.157757;                 maxsteer = 32.372; 
 
 % Maximum Motor Torque (Nm)                % Final Drive Ratio                      % Motor Maximum Rotation Speed (RPM)
-max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 4917;
+max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 4539;
+
+% Lateral Tire Correlation Factor          % Longitudinal Tire Correlation Factor   % Longitudinal Tire Sensitivity 
+tc_lat = 0.6077;                           tc_long = 0.6077;                        sen_long = 1;
+
+% Lateral Tire Sensitivity 
+sen_lat = 1;
 
 
 % Rolling Start: 1  Static Start: 0
 rollingstart = 1;
 
 % Turn On: 1  Turn Off: 0  Temporary Off: 2
-masterswitch = 1;
-
+masterswitch = 0;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -62,17 +66,19 @@ if rollingstart == 1
     dist = horzcat(dist,dist2,dist3);    
 end
 
-%generate boundary speed profile
-BSP = bsp(mass,C2,air_density,frontel_area,CLc,tyre_model,camber,max_rpm,FDR,R_wheel);%output a nx2 array
-%plot(BSP);%plot bsp diagram
-%estimate slip angle base on track 
+% Generate boundary speed profile
+BSP = bsp(mass,C2,air_density,frontel_area,CLc,tyre_model,camber,max_rpm,FDR,R_wheel,tc_lat,sen_lat);%output a nx2 array
+
+% Estimate slip angle base on track 
 slip_ang = slip_angle(C2);
-%generate limit speed profile with acceleration
-%Accel_LSP = accel_lsp(dist,C2,BSP,mass,air_density,frontel_area,coef_lift,coef_drag,coef_friction);
-Accel_LSP = accel_lsp_v2(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R_wheel,max_torque);
-%plot(Accel_LSP)
-temp_lsp = lsp(C2,dist,camber,tyre_model,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,Accel_LSP);
-%
+
+% Generate Acceleration Speed Profile
+Accel_LSP = accel_lsp_v2(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R_wheel,max_torque,tc_long,sen_long);
+
+% Generate Limit Speed Profile
+temp_lsp = lsp(C2,dist,camber,tyre_model,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,Accel_LSP,tc_long,sen_long);
+
+% Limit by maximum yaw rate
 [final_lsp,yaw_diagram] = yawcal(temp_lsp,C2,maxsteer,wheelbase);
 
 if rollingstart == 1
@@ -82,23 +88,23 @@ if rollingstart == 1
     final_lsp = final_lsp(len/3:len*2/3-1);
 end
 
-%return lap time simulation, lapsetime: lap time at each data point
+% Return lap time simulation, lapsetime: lap time at each data point
 [lap_time_sim,lapsetime] = Lap_Time_Simulation(final_lsp,dist1);
 
-%return slip angle estimation
-%alpha_profile = slip_model(final_lsp,slip_ang,mass,air_density,frontel_area,coef_lift,camber,tyre_model,C2);
-%disp(alpha_profile);
+% Calculate telemetry data
 Long_Accel = longG(final_lsp,dist1); %return Long G diagram
 Lat_Accel = latG(final_lsp,C2); %return Lat G diagram
 throttle_graph = throttle(final_lsp,dist1);
 brake_graph = brake(final_lsp,dist1,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,C2,tyre_model);
 
-
+h = waitbar(0,'Running...');
+waitbar(0.5,h,'Halfway there...')
+perc = 75;
+waitbar(perc/100,h,sprintf('%d%% along...',perc))
+close(h)
 
 %^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 
 if masterswitch == 1
     fprintf("Simulated Lap Time is "+lap_time_sim+" seconds"+".\n");

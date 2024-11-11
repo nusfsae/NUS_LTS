@@ -1,4 +1,4 @@
-%this function returns lap time simulation in seconds
+% This function returns lap time simulation in seconds
 function [lap_time_sim,lapsetime] = Lap_Time_Simulation(final_lsp,dist)
 
 lap_time_sim = 0;

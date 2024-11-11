@@ -1,5 +1,4 @@
 %this function finds the local minima of a nx2 array
-%this code is not efficient at all
 function min_list = localfinder(array)
 
 len = length(array);
@@ -17,10 +16,9 @@ index_list = [];
 
 for point = 2:len-1   
     if array(point,1)<=array(point+1,1) && array(point,1)<array(point-1,1)
-        local_min(end+1) = array(point); 
+        local_min(end+1) = array(point); %fill in values of local minima and their indices
         index_list(end+1) = point;
-    end
-       %fill in values of local minima and their indices
+    end       
 end
 
 min_list = zeros(count,2);

@@ -1,3 +1,4 @@
+% Return Longitudinal G across the track
 function Long_Accel = longG(lsp,dist)
 
 %a = (v.^2-u.^2)/2*s
