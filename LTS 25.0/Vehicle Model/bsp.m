@@ -26,3 +26,5 @@ for point = 1:num
     end
 
 end
+
+function 

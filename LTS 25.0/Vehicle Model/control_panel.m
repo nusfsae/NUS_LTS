@@ -19,16 +19,18 @@ load(tyre)
 
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Vehicle Mass (kg)                        % Air Density (kg/m^3)                   % Tyre Model
 mass = 274;                                air_density = 1.196;                     tyre_model = fit10psi;
 
 % Coefficient of Drag (Straight)           % Coefficient of Lift (Straight)         % Coefficient of Lift (Corner)
-CDs = 1.619549;                            CLs = 4.224138;                          CLc = 3.469153;
+CDs = 1.54709;                             CLs = 4.116061;                          CLc = 3.782684;
                    
 % Coefficient of Drag (Corner)             % Vehicle Wheelbase (m)                  % Wheel Radius (m)
-CDc = 1.469746;                            wheelbase = 1.531;                       R_wheel = 0.2032;
+CDc = 1.410518;                            wheelbase = 1.531;                       R_wheel = 0.2032;
 
 % Static Camber (Radian)                   % Car Frontel Area (m^2)                 % Maximum Steering Angle (Degree)
 camber = 0;                                frontel_area = 1.157757;                 maxsteer = 32.372; 
@@ -47,11 +49,13 @@ sen_lat = 1;
 rollingstart = 1;
 
 % Turn On: 1  Turn Off: 0  Temporary Off: 2
-masterswitch = 0;
+masterswitch = 1;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
+
+fprintf("Initiating Simulation... ..."+"\n");
 
 dist1 = dist;
 C21 = C2;
@@ -67,7 +71,9 @@ if rollingstart == 1
 end
 
 % Generate boundary speed profile
+fprintf("Generating Boundary Speed Profile... ..."+"\n");
 BSP = bsp(mass,C2,air_density,frontel_area,CLc,tyre_model,camber,max_rpm,FDR,R_wheel,tc_lat,sen_lat);%output a nx2 array
+fprintf("Almost there... ..."+"\n");
 
 % Estimate slip angle base on track 
 slip_ang = slip_angle(C2);
@@ -76,7 +82,9 @@ slip_ang = slip_angle(C2);
 Accel_LSP = accel_lsp_v2(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R_wheel,max_torque,tc_long,sen_long);
 
 % Generate Limit Speed Profile
+
 temp_lsp = lsp(C2,dist,camber,tyre_model,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,Accel_LSP,tc_long,sen_long);
+
 
 % Limit by maximum yaw rate
 [final_lsp,yaw_diagram] = yawcal(temp_lsp,C2,maxsteer,wheelbase);
@@ -94,21 +102,16 @@ end
 % Calculate telemetry data
 Long_Accel = longG(final_lsp,dist1); %return Long G diagram
 Lat_Accel = latG(final_lsp,C2); %return Lat G diagram
-throttle_graph = throttle(final_lsp,dist1);
+throttle_graph = throttle(final_lsp,dist,max_torque,FDR,R_wheel,mass);
 brake_graph = brake(final_lsp,dist1,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,C2,tyre_model);
-
-h = waitbar(0,'Running...');
-waitbar(0.5,h,'Halfway there...')
-perc = 75;
-waitbar(perc/100,h,sprintf('%d%% along...',perc))
-close(h)
-
+clc
+fprintf("Simulation completed!" +"\n");
 %^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if masterswitch == 1
-    fprintf("Simulated Lap Time is "+lap_time_sim+" seconds"+".\n");
-end
+
+fprintf("Simulated Lap Time is "+lap_time_sim+" seconds"+".\n");
+
 
 
 if masterswitch == 1
@@ -131,7 +134,7 @@ if masterswitch == 1
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist1,Long_Accel);
     xlabel("Distance (m)")
@@ -140,7 +143,7 @@ if masterswitch == 2
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist1,Lat_Accel);
     xlabel("Distance (m)")
@@ -149,28 +152,44 @@ if masterswitch == 2
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist1,throttle_graph)
     xlabel("Distance (m)")
-    ylabel("Throttle Percentage")
+    ylabel("Throttle Percentage (%)")
     sgtitle("Throttle Graph")
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist1,brake_graph);
     xlabel("Distance (m)")
-    ylabel("Brake Percentage")
+    ylabel("Brake Percentage (%)")
     sgtitle("Brake Graph")
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist,yaw_diagram);
     xlabel("Distance (m)")
     ylabel("Yaw Rate")
     sgtitle("Yaw Rate Graph")
+end
+
+function basicwaitbar
+f = waitbar(0,'Please wait...');
+pause(.5)
+
+waitbar(.33,f,'Loading your data');
+pause(1)
+
+waitbar(.67,f,'Processing your data');
+pause(1)
+
+waitbar(1,f,'Finishing');
+pause(1)
+
+close(f)
 end
