@@ -1,10 +1,9 @@
-function brake_graph = brake(lsp,dist,mass,den,A,CLs,CLc,CDs,CDc,camber,C2,tyre_model)
+function brake_graph = brake(lsp,dist,mass,den,A,CLs,CLc,CDs,CDc,camber,C2,tyre_model,P,tc_long)
 
 Long_Accel = longG(lsp,dist);
 len = length(lsp);
-slip_ang = slip_angle(C2);
-
 brake_graph = zeros(len,1);
+P = convpres(P, 'psi', 'Pa');
 
 for i = 1:len
     curv = abs(1/C2(i));
@@ -19,14 +18,19 @@ for i = 1:len
 
     actual = 0;
     v = lsp(i);
-    SA = slip_ang(i);
+    
 
-    RF = 0.25*(mass*9.81 + 0.5*den*A*CL*v^2);
-    [~,Long,~] = tyres(camber,SA,RF,tyre_model);
-    Long = 4*Long;
+
+    Reaction_f = 0.25*(mass*9.81+0.5*den*A*CL*v^2);
+
+    inputsMF = [Reaction_f 0.15 0 camber 0 10 P];
+
+    [ outMF ] = mfeval(tyre_model, inputsMF, 121);
+    %disp(abs(outMF(1)));
+    Long = 4*tc_long*abs(outMF(1));
 
     full = Long/(mass*9.81);
-
+    
     if Long_Accel(i)<0
         actual = abs(Long_Accel(i));    
     end   
@@ -35,6 +39,7 @@ for i = 1:len
     brakeG = actual-Drag/(mass*9.81);
     
     bb= (brakeG/full)*100;
+    
 
     if bb>100
         bb =100;

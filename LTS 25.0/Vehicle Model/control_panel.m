@@ -1,28 +1,28 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Run this program to obtain simulation results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 close all
 clc
 
 %open LTS directory
+
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
 
 %open track model file
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
 
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
 track = '241013 JTC PM'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m
 load(track)
 
 %open tire model file
 
 cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
-%tyre = 'R25B_V2';
 HoosierR20 = mfeval.readTIR('HoosierR20.TIR');
 HoosierLC0 = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
 
-%load(tyre)
+
 
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 
-warning('off','all');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -63,57 +63,15 @@ masterswitch = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
+
 tic
-fprintf("Initiating Simulation... ..."+"\n");
 
-dist1 = dist;
-C21 = C2;
-pos1 = pos;
-
-if rollingstart == 1
-    len=length(C2);
-    C2 = horzcat(C2,C2,C2);
-    pos = horzcat(pos,pos,pos);
-    dist2 = dist1+2*dist(len)-dist(len-1);
-    dist3 = dist2+2*dist(len)-dist(len-1);
-    dist = horzcat(dist,dist2,dist3);    
-end
-
-% Estimate slip angle base on track 
-slip_ang = slip_angle(C2);
-
-% Generate boundary speed profile
-fprintf("Generating Boundary Speed Profile... ..."+"\n");
-BSP = cornerProfile(mass,C2,air_density,frontel_area,CLc,tyre_model,camber,max_rpm,FDR,R_wheel,tc_lat,sen_lat,phit,P,useMode);%output a nx2 array
-fprintf("Almost there... ..."+"\n");
-
-
-% Generate Acceleration Speed Profile
-Accel_LSP = accelProfile(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R_wheel,max_torque,tc_long,sen_long,phit,P,useMode);
-
-% Generate Limit Speed Profile
-Final_LSP = brakeProfile(C2,dist,camber,tyre_model,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,Accel_LSP,tc_long,sen_long,phit,P,useMode);
-
-
-if rollingstart == 1
-    len=length(C2);
-    BSP = BSP(len/3:len*2/3-1);
-    Accel_LSP = Accel_LSP(len/3:len*2/3-1);
-    Final_LSP = Final_LSP(len/3:len*2/3-1);
-end
-
-% Return lap time simulation, lapsetime: lap time at each data point
-[lap_time_sim,lapsetime] = Lap_Time_Simulation(Final_LSP,dist1);
-
-% Calculate telemetry data
-Long_Accel = longG(Final_LSP,dist1); %return Long G diagram
-Lat_Accel = latG(Final_LSP,C2); %return Lat G diagram
-%throttle_graph = throttle(final_lsp,dist,max_torque,FDR,R_wheel,mass);
-%brake_graph = brake(final_lsp,dist1,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,C2,tyre_model);
-
-fprintf("Simulation completed!" +"\n");
+[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer,max_rpm, ...
+    max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
 
 toc
+
 %^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -133,9 +91,9 @@ end
 
 if masterswitch == 1
     figure
-    plot(dist1,Final_LSP*3.6);
+    plot(dist,Final_LSP*3.6);
     hold on
-    plot(dist1,BSP*3.6);
+    plot(dist,BSP*3.6);
     xlabel("Distance (m)")
     ylabel("Speed (km/h)")
     sgtitle("Speed Profile")
@@ -144,7 +102,7 @@ end
 
 if masterswitch == 1
     figure
-    plot(dist1,Long_Accel);
+    plot(dist,Long_Accel);
     xlabel("Distance (m)")
     ylabel("Acceleration (G)")
     sgtitle("Longitudinal Acceleration")
@@ -153,7 +111,7 @@ end
 
 if masterswitch == 1
     figure
-    plot(dist1,Lat_Accel);
+    plot(dist,Lat_Accel);
     xlabel("Distance (m)")
     ylabel("Acceleration (G)")
     sgtitle("Lateral Acceleration")
@@ -162,7 +120,7 @@ end
 
 if masterswitch == 2
     figure
-    plot(dist1,throttle_graph)
+    plot(dist,throttle_graph)
     xlabel("Distance (m)")
     ylabel("Throttle Percentage (%)")
     sgtitle("Throttle Graph")
@@ -171,7 +129,7 @@ end
 
 if masterswitch == 2
     figure
-    plot(dist1,brake_graph);
+    plot(dist,brake_graph);
     xlabel("Distance (m)")
     ylabel("Brake Percentage (%)")
     sgtitle("Brake Graph")

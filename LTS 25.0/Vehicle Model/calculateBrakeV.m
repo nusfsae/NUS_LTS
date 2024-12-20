@@ -11,26 +11,20 @@ for vel = v1:-0.1:v2
     
     Reaction_f = 0.25*(mass*9.81 + 0.5*air_density*frontel_area*CL*(vel^2));%normal load under this speed at one tire
     Drag = 0.5*air_density*frontel_area*CD*(vel^2);
-
     
-    alpha = 0; % convert deg to rad
-    long_slip = 0.1;
-    
-    V = 10;    
+    alpha = 0; % assume no sideslip when braking
+    long_slip = 0.1; % assume braking at optimized SR    
+    V = 10; % anyhow give a number to tire model    
 
     inputsMF = [Reaction_f long_slip alpha camber phit V P];
-    %disp(inputsMF)
-
+    
     [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
     
-    Long = 4*tc_long*sen_long*abs(outMF(1));%Tire correlation factor
-    %disp(Long)
- 
-    deccel = (Long+Drag)/mass;%deceleration value        
-    new_v2 = sqrt((vel^2) - 2*deccel*dist);
+    Long = 4*tc_long*sen_long*abs(outMF(1));% Tire correlation factor
+     
+    deccel = (Long+Drag)/mass; % deceleration value        
+    new_v2 = sqrt((vel^2) - 2*deccel*dist);   
     
-    
-
     if new_v2 < v2
         velocity = vel;
         
