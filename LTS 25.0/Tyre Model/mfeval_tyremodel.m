@@ -6,7 +6,7 @@ kappa = 0;
 alpha = 0.174533;
 IA = 0;
 phit = 0;
-V = 10;
+V = 0;
 P = 68947.6;
 
 inputsMF = [Fz kappa alpha IA phit V P];
@@ -19,7 +19,7 @@ Fy = abs(outMF(2));
 
 % inputsMF
 % Fz (N)
-% Longitudinal slip (rad) kappa
+% Longitudinal slip kappa (-1 to 1)
 % Side slip (rad) alpha
 % IA (rad)
 % turn slip phit (put 0)
