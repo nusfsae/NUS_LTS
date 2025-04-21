@@ -7,11 +7,14 @@
 % 2) Positive yaw in MOTEC is in clockwise direction
 
 % Load data, convert to SI unit, and calculate time step
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 3301 Submission\Track Model')
-load ('24 Endurance Fastest Motec.mat');
+
+% CHANGE HERE```
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
+load ('JTC 2025 v2 26laps motec.mat');
+% CHANGE HERE^^^
 
 Corr_Speed.Value = Corr_Speed.Value * 1000 / 3600;
-G_Sensor_Front_Yaw_Rate.Value = G_Sensor_Front_Yaw_Rate.Value * pi / 180;
+G_Sensor_Front_Yaw_Rate.Value = -G_Sensor_Front_Yaw_Rate.Value * pi / 180;
 t = Corr_Speed.Time(2) - Corr_Speed.Time(1);
 
 % Create Structure for position,velocity and theta
@@ -68,7 +71,7 @@ c2 = interp1(dist,C2,Dist);
 x = interp1(dist,pos.x,Dist);
 y = interp1(dist,pos.y,Dist);
 figure
-scatter(x,y)
+scatter(x,y,'.')
 axis equal
 sgtitle('Track Model Position')
 xlabel('X coordinates')
@@ -80,7 +83,9 @@ C2 = c2;
 pos.x = x;
 pos.y = y;
 
-save("24 Endurance Fastest.mat",'pos','C2','dist')
+% CHANGE HERE ```
+save("JTC 2025 v2 26laps.mat",'pos','C2','dist')
+% CHANGE HERE ^^^
 
 clear x y C1 C3 c2 Dist i meshsize s size t vel theta
 
