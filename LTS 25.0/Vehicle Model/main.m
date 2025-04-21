@@ -31,20 +31,23 @@ Final_LSP = brakeProfile(C2,dist,camber,tyre_model,mass,air_density,frontel_area
 
 if rollingstart == 1
     len=length(C2);
-    BSP = BSP(len/3:len*2/3-1);
-    Accel_LSP = Accel_LSP(len/3:len*2/3-1);
-    Final_LSP = Final_LSP(len/3:len*2/3-1);
+    BSP = BSP(len/3+1:len*2/3);
+    Accel_LSP = Accel_LSP(len/3+1:len*2/3);
+    Final_LSP = Final_LSP(len/3+1:len*2/3);
 end
 
 % Return lap time simulation, lapsetime: lap time at each data point
 [lap_time_sim,lapsetime] = Lap_Time_Simulation(Final_LSP,dist1);
 
 % Calculate telemetry data
-Long_Accel = longG(Final_LSP,dist1); %return Long G diagram
-Lat_Accel = latG(Final_LSP,C2); %return Lat G diagram
-throttle_graph = throttle(Final_LSP,dist1,max_torque,FDR,R_wheel,mass);
-brake_graph = brake(Final_LSP,dist1,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,C2,tyre_model,P,tc_long);
+Long_Accel = longGTele(Final_LSP,dist1); %return Long G diagram
+Lat_Accel = latGTele(Final_LSP,C2); %return Lat G diagram
+throttle_graph = throttleTele(Final_LSP,dist1,max_torque,FDR,R_wheel,mass);
+brake_graph = brakeTele(Final_LSP,dist1,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,C2,tyre_model,P,tc_long);
 
+clc
 fprintf("Simulation completed!" +"\n");
+
+fprintf("Simulated Lap Time is "+lap_time_sim+" seconds"+".\n");
 
 end

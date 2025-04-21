@@ -41,7 +41,7 @@ for point = 1:(track_len-1)
     else
         torque = -5.4*vel + 297.181;
     end
-    F_powertrain = torque*FDR/R;
+    F_powertrain = 0.4*torque*FDR/R;
 
     %calculate available acceleration remained
     F = min(F_t,F_powertrain);

@@ -1,16 +1,15 @@
 % Driving patterns comparison
 
-% Export MoTec current lap, include channel Brake_Pressure_Front, Corr_Dist, Corr_Speed, Throttle_Pedal
-
-% Run LTS if haven't
-cd('C:\Users\Patri\OneDrive - National University of Singapore\Documents\NUS\Formula SAE\LTS 25.0\Vehicle Model')
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 %run control_panel
 
-cd('C:\Users\Patri\OneDrive - National University of Singapore\Documents\NUS\Formula SAE\LTS 25.0')
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
 close all
 
+
+
 % Load Lap 1
-motec1 = load('131024Lap4'); 
+motec1 = load('Patrick Lap2'); 
 speed1 = motec1.Corr_Speed.Value;
 time1 = motec1.Corr_Speed.Time;
 distance1 = motec1.Corr_Dist.Value;
@@ -19,7 +18,7 @@ brake1 = motec1.Brake_Pressure_Front.Value;
 
 
 % Load Lap 2
-motec2 = load('131024Lap5'); 
+motec2 = load('Ian Lap3'); 
 speed2 = motec2.Corr_Speed.Value;
 time2 = motec2.Corr_Speed.Time;
 distance2 = motec2.Corr_Dist.Value;
@@ -36,12 +35,12 @@ t2 = time2 - time2(1);
 
 % Compare speed
 figure
-plot(dist1,speed1,'DisplayName', 'Driver 1');
+plot(dist1,speed1,'DisplayName', 'Patrick');
 xlabel("Distance (m)")
 ylabel("Speed (km/h)")
 sgtitle("Speed Profile Comparison")
 hold on
-plot(dist2,speed2,'DisplayName', 'Driver 2');
+plot(dist2,speed2,'DisplayName', 'Ian');
 hold on 
 %plot(dist,final_lsp*3.6,'DisplayName', 'LTS')
 legend

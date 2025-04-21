@@ -1,4 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Run this program to obtain simulation results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+warning('off','all')
+warning
 
 close all
 clc
@@ -10,13 +12,13 @@ cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
 %open track model file
 
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
-track = '241013 JTC PM'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m
+track = 'JTC 2025 v2.mat'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m %JTC 2025 v1.mat
 load(track)
 
 %open tire model file
 
 cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
-HoosierR20 = mfeval.readTIR('HoosierR20.TIR');
+HoosierR20 = mfeval.readTIR('HoosierR20.TIR'); %this tire no longitudinal data
 HoosierLC0 = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
 
 
@@ -67,8 +69,8 @@ masterswitch = 1;
 tic
 
 [BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
-    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer,max_rpm, ...
-    max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
 
 toc
 
@@ -76,14 +78,11 @@ toc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-fprintf("Simulated Lap Time is "+lap_time_sim+" seconds"+".\n");
 
-
-
-if masterswitch == 2
+if masterswitch == 1
     if ~isempty(pos)
         figure('Position',[625,60,900,700])
-        plotclr(pos1.x,-pos1.y,Final_LSP*3.6);
+        plotclr(pos.x,pos.y,Final_LSP*3.6,'.');
         sgtitle("Speed Profile on Track Model")
     end
 end
@@ -118,16 +117,17 @@ if masterswitch == 1
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist,throttle_graph)
     xlabel("Distance (m)")
     ylabel("Throttle Percentage (%)")
     sgtitle("Throttle Graph")
+    ylim([0,120])
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist,brake_graph);
     xlabel("Distance (m)")
@@ -136,11 +136,5 @@ if masterswitch == 2
 end
 
 
-if masterswitch == 2
-    figure
-    plot(dist,yaw_diagram);
-    xlabel("Distance (m)")
-    ylabel("Yaw Rate")
-    sgtitle("Yaw Rate Graph")
-end
+
 
