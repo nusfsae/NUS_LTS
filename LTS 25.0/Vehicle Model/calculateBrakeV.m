@@ -5,7 +5,6 @@
 %(v1>v2)
 function velocity = calculateBrakeV(v1,v2,dist,camber,slip_ang,tyre_model,mass,air_density,frontel_area,CL,CD,tc_long,sen_long,phit,P,useMode)
 velocity = v1;
-P = convpres(P, 'psi', 'Pa'); % convert psi to pa
 
 for vel = v1:-0.1:v2
     
@@ -16,11 +15,10 @@ for vel = v1:-0.1:v2
     long_slip = 0.1; % assume braking at optimized SR    
     V = 10; % anyhow give a number to tire model    
 
-    inputsMF = [Reaction_f long_slip alpha camber phit V P];
+
+    [Lat,Long] = tires(tyre_model,Reaction_f,alpha,long_slip,camber,P,V); 
     
-    [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-    
-    Long = 4*tc_long*sen_long*abs(outMF(1));% Tire correlation factor
+    Long = 4*tc_long*sen_long*Long;% Tire correlation factor
      
     deccel = (Long+Drag)/mass; % deceleration value        
     new_v2 = sqrt((vel^2) - 2*deccel*dist);   

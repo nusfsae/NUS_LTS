@@ -47,10 +47,10 @@ camber = 0;                                frontel_area = 1.157757;             
 max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 5500;
 
 % Lateral Tire Correlation Factor          % Longitudinal Tire Correlation Factor   % Longitudinal Tire Sensitivity 
-tc_lat = 0.6077;                           tc_long = 0.6077;                        sen_long = 1;
+tc_lat = 0.6077;                           tc_long = 1;                             sen_long = 1;
 
-% Lateral Tire Sensitivity 
-sen_lat = 1;
+% Lateral Tire Sensitivity                 % Torque Setting
+sen_lat = 1;                               Ipeak = 0.6;
 
 % Tire Model Setting
 useMode = 121;
@@ -70,7 +70,7 @@ tic
 
 [BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
     mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
-    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak);
 
 toc
 
@@ -79,7 +79,7 @@ toc
 
 
 
-if masterswitch == 1
+if masterswitch == 2
     if ~isempty(pos)
         figure('Position',[625,60,900,700])
         plotclr(pos.x,pos.y,Final_LSP*3.6,'.');
@@ -91,8 +91,8 @@ end
 if masterswitch == 1
     figure
     plot(dist,Final_LSP*3.6);
-    hold on
-    plot(dist,BSP*3.6);
+    % hold on
+    % plot(dist,BSP*3.6);
     xlabel("Distance (m)")
     ylabel("Speed (km/h)")
     sgtitle("Speed Profile")
@@ -108,7 +108,7 @@ if masterswitch == 1
 end
 
 
-if masterswitch == 1
+if masterswitch == 2
     figure
     plot(dist,Lat_Accel);
     xlabel("Distance (m)")
@@ -117,7 +117,7 @@ if masterswitch == 1
 end
 
 
-if masterswitch == 1
+if masterswitch == 2
     figure
     plot(dist,throttle_graph)
     xlabel("Distance (m)")
@@ -127,7 +127,7 @@ if masterswitch == 1
 end
 
 
-if masterswitch == 1
+if masterswitch == 2
     figure
     plot(dist,brake_graph);
     xlabel("Distance (m)")

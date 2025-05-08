@@ -1,9 +1,8 @@
 %this function return velocity profile after considering car acceleration
-function accel_profile = accelProfile(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R,max_torque,tc_long,sen_long,phit,P,useMode)
+function accel_profile = accelProfile(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R,max_torque,tc_long,sen_long,phit,P,Ipeak)
 track_len = length(C2);
 accel_profile = zeros(track_len,1);
 %slip_ang = slip_angle(C2); % estimate slip angle for this track
-P = convpres(P, 'psi', 'Pa'); % convert psi to pa
 
 for point = 1:(track_len-1)
     %SA = slip_ang(point);%slip angle at this point
@@ -25,23 +24,16 @@ for point = 1:(track_len-1)
     V = 10;   
 
     Reaction_f = 0.25*(mass*9.81+0.5*air_density*frontel_area*CL*vel^2);
-
-    inputsMF = [Reaction_f long_slip alpha camber phit V P];
-
-    [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-    Long = abs(outMF(1));
+    [Lat,Long] = tires(tyre_model,Reaction_f,alpha,long_slip,camber,P,V); 
+    
+    
     Long = 4*tc_long*sen_long*Long;
     
     Drag = 0.5*air_density*(vel^2)*CD*frontel_area;%drag force at this speed
     F_t= Long-Drag;
     
     % Powertrain maximum tractive force
-    if vel<22.1657
-        torque = max_torque;
-    else
-        torque = -5.4*vel + 297.181;
-    end
-    F_powertrain = 0.4*torque*FDR/R;
+    F_powertrain = Ipeak*220*FDR/R;
 
     %calculate available acceleration remained
     F = min(F_t,F_powertrain);

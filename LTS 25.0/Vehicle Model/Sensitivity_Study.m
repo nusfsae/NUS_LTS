@@ -15,15 +15,18 @@ load(track)
 %open tire model file
 
 cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
-tyre = 'R25B_V2';
-load(tyre)
+HoosierR20 = mfeval.readTIR('HoosierR20.TIR'); %this tire no longitudinal data
+HoosierLC0 = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
 
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Vehicle Mass (kg)                        % Air Density (kg/m^3)                   % Tyre Model
-mass = 274;                                air_density = 1.196;                     tyre_model = fit10psi;
+mass = 260;                                air_density = 1.196;                     tyre_model = HoosierR20;
+
+% Tyre Pressure (psi)                      % Longitudinal Slip                      % Turn Slip (1/m)
+P = 10;                                    long_slip = 0.145;                       phit = 0;
 
 % Coefficient of Drag (Straight)           % Coefficient of Lift (Straight)         % Coefficient of Lift (Corner)
 CDs = 1.54709;                             CLs = 4.116061;                          CLc = 3.782684;
@@ -35,7 +38,7 @@ CDc = 1.410518;                            wheelbase = 1.531;                   
 camber = 0;                                frontel_area = 1.157757;                 maxsteer = 32.372; 
 
 % Maximum Motor Torque (Nm)                % Final Drive Ratio                      % Motor Maximum Rotation Speed (RPM)
-max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 4539;
+max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 5500;
 
 % Lateral Tire Correlation Factor          % Longitudinal Tire Correlation Factor   % Longitudinal Tire Sensitivity 
 tc_lat = 0.6077;                           tc_long = 0.6077;                        sen_long = 1;
@@ -43,9 +46,15 @@ tc_lat = 0.6077;                           tc_long = 0.6077;                    
 % Lateral Tire Sensitivity 
 sen_lat = 1;
 
+% Tire Model Setting
+useMode = 121;
+
 
 % Rolling Start: 1  Static Start: 0
 rollingstart = 1;
+
+% Turn On: 1  Turn Off: 0  Temporary Off: 2
+masterswitch = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -145,7 +154,7 @@ end
 % Enter settings of sensitivity study: 
 
 % Turn On: true  Turn Off: false
-if false
+if true
 
     % Range of Lateral G change you are interested in (%)
     range = 5;
@@ -162,11 +171,15 @@ if false
     i = 0;
     len = ceil((sen_lat_max-sen_lat_min)/precision);
     lat_G_analysis = zeros(len,2);
-    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+    [BSP,Accel_LSP,final_lsp,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
 
     for sen = sen_lat_min:precision:sen_lat_max
         i = i+1;
-        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen,sen_long,wheelbase,maxsteer,rollingstart);
+        [BSP,Accel_LSP,final_lsp,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
         percent_time = (time-lts)/lts*100;
         percent_lat_G = (sen-sen_lat)/sen_lat*100;
         lat_G_analysis(i,1) = percent_lat_G;
