@@ -1,12 +1,13 @@
 parameterSource = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
 
 Fz = 3200/4; %per tire
-kappa = 0.1;
-alpha = 0;
+kappa = 0;
+alpha = 0.1;
 IA = 0;
 phit = 0;
 V = 10;
 P = 68947.6;
+R_wheel = 0.2032;
 
 
 alpha = deg2rad(alpha);
@@ -19,22 +20,28 @@ useMode = 121;
 
 Fx = abs(outMF(1));
 Fy = abs(outMF(2));
+My = abs(outMF(5)); 
+FR = My*R_wheel;
 
-cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
-tyre = 'R25B_V2';
-load(tyre)
+fprintf('Rolling Resistance Force')
+disp(My);
+disp(FR);
 
-tyre_model = fit10psi;
-
-[Lat,Long,~] = tyres(IA,rad2deg(alpha),Fz,tyre_model); 
-
-fprintf('Old model Long ');
-disp(Long);
-fprintf('New model Fx ');
-disp(Fx);
-
-fprintf('Old model Lat ');
-disp(Lat);
-fprintf('New model Fy');
-disp(Fy);
+%cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
+%tyre = 'R25B_V2';
+%load(tyre)
+% 
+% tyre_model = fit10psi;
+% 
+% [Lat,Long,~] = tyres(IA,rad2deg(alpha),Fz,tyre_model); 
+% 
+% fprintf('Old model Long ');
+% disp(Long);
+% fprintf('New model Fx ');
+% disp(Fx);
+% 
+% fprintf('Old model Lat ');
+% disp(Lat);
+% fprintf('New model Fy');
+% disp(Fy);
 
