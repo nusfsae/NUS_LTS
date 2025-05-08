@@ -10,7 +10,7 @@
 
 % CHANGE HERE```
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
-load ('JTC 2025 v2 26laps motec.mat');
+load ('24 Acceleration Motec.mat');
 % CHANGE HERE^^^
 
 Corr_Speed.Value = Corr_Speed.Value * 1000 / 3600;
@@ -84,7 +84,7 @@ pos.x = x;
 pos.y = y;
 
 % CHANGE HERE ```
-save("JTC 2025 v2 26laps.mat",'pos','C2','dist')
+save("24 Accel.mat",'pos','C2','dist')
 % CHANGE HERE ^^^
 
 clear x y C1 C3 c2 Dist i meshsize s size t vel theta
