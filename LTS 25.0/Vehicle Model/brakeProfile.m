@@ -1,4 +1,5 @@
-function final_lsp = brakeProfile(C2,dist,camber,tyre_model,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,Accel_LSP,tc_long,sen_long,phit,P,useMode)
+function final_lsp = brakeProfile(C2,dist,camber,tyre_model,mass,air_density,frontel_area, ...
+    CLs,CLc,CDs,CDc,SAprofile,Accel_LSP,tc_long,sen_long,phit,P,useMode,Long_Accel,cg_h,wheelbase,ab)
 
 final_lsp = Accel_LSP;
 local_min = localfinder(Accel_LSP);%return 2d array, local minima speed vs corresponded indices
@@ -12,7 +13,9 @@ for point = 1:count-1 %for every interval between 2 local minima
    
     for i = 0:local_min(point,2) %for every point in the interval
         target = local_min(point+1,2) - i; % ACTUAL index of iteration(start from the last point of interval)
+        SA = SAprofile(target-1);
         curv = abs(1/C2(target-1));
+        longG = Long_Accel(target-1);
         
         % differentiate straight line and corner aero properties
         if curv >30
@@ -30,7 +33,8 @@ for point = 1:count-1 %for every interval between 2 local minima
         SA = 0;
 
         % Calculate velocity after braking with these conditions    
-        braked_v = calculateBrakeV(v1,v2,distance,camber,SA,tyre_model,mass,air_density,frontel_area,CL,CD,tc_long,sen_long,phit,P,useMode);
+        braked_v = calculateBrakeV(v1,v2,distance,camber,SA,tyre_model,mass,air_density,frontel_area, ...
+            CL,CD,tc_long,sen_long,phit,P,useMode,longG,cg_h,wheelbase,ab,SA);
                    
         final_lsp(target-1) = braked_v;                 
     end     

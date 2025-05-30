@@ -2,7 +2,7 @@
 warning('off','all')
 warning
 
-close all
+
 clc
 
 %open LTS directory
@@ -12,7 +12,7 @@ cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
 %open track model file
 
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
-track = 'JTC 2025 v2.mat'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m %JTC 2025 v1.mat
+track = 'JTC v2.mat'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m %JTC 2025 v1.mat %JTC v2.mat
 load(track)
 
 %open tire model file
@@ -32,7 +32,7 @@ cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model'
 mass = 274;                                air_density = 1.196;                     tyre_model = HoosierLC0;
 
 % Tyre Pressure (psi)                      % Longitudinal Slip                      % Turn Slip (1/m)
-P = 10;                                    long_slip = 0.145;                       phit = 0;
+P = 9;                                     long_slip = 0.145;                       phit = 0;
 
 % Coefficient of Drag (Straight)           % Coefficient of Lift (Straight)         % Coefficient of Lift (Corner)
 CDs = 1.54709;                             CLs = 4.116061;                          CLc = 3.782684;
@@ -52,8 +52,8 @@ tc_lat = 0.6077;                           tc_long = 1;                         
 % Lateral Tire Sensitivity                 % Torque Setting
 sen_lat = 1;                               Ipeak = 0.6;
 
-% Tire Model Setting
-useMode = 121;
+% Tire Model Setting                       % CG Height                              % Aero Balance
+useMode = 121;                             cg_h = 0.256;                            ab = 0.5310665;
 
 
 % Rolling Start: 1  Static Start: 0
@@ -68,9 +68,22 @@ masterswitch = 1;
 
 tic
 
-[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+% % Estimation Round with single-wheel model 
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\One_wheel')
+
+[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main1w( ...
     mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
     max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak);
+
+
+% % Precise Simulation Round with two-wheel model
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
+
+[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak,cg_h,Long_Accel,ab);
 
 toc
 
@@ -79,7 +92,7 @@ toc
 
 
 
-if masterswitch == 2
+if masterswitch == 1
     if ~isempty(pos)
         figure('Position',[625,60,900,700])
         plotclr(pos.x,pos.y,Final_LSP*3.6,'.');
@@ -108,7 +121,7 @@ if masterswitch == 1
 end
 
 
-if masterswitch == 2
+if masterswitch == 1
     figure
     plot(dist,Lat_Accel);
     xlabel("Distance (m)")

@@ -4,16 +4,18 @@ figure
 mass = 196+52; % khai was driving
 A = 1.157757;
 Den = 1.196;
-V = 12/3.6;
+V = 22/3.6;
 CL = 4.116061;
+CD = 1.54709;
 FDR = 3.36;
 R = 0.2032;
 FL = 0.5*A*CL*Den*V^2;
+FD = 0.5*A*CD*Den*V^2;
 Fz = mass*9.81+FL;
 pwteff=0.8;
 
 
-Ftyre = pwteff*0.5*220*FDR/R;
+Ftyre = pwteff*0.55*220*FDR/R-FD;
 coeff = Ftyre/Fz;
 fprintf("tire coeff "+coeff);
 
@@ -36,5 +38,5 @@ FL = 0.5*A*CL*Den*Vtest^2;
 Fz = mass*9.81+FL;
 Ftyretest = coeff*Fz;
 accelG = Ftyretest/((196+52)*9.81);
-fprintf("accel G "+accelG);
+fprintf("accel G "+accelG+'\n');
 
