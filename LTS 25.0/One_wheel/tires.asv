@@ -1,0 +1,41 @@
+% Reformat Tire model function to clean up main function
+% All angles in degrees
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
+
+HoosierR20 = mfeval.readTIR('HoosierR20.TIR');
+tyre_model = HoosierR20;
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
+
+Fz = 2500;
+SR = 0.2;
+SA = 0;
+IA = 0;
+P = 9;
+
+index = 0;
+Flist = zeros((10/0.1),2);
+for V = 0:0.1:10
+    [~,Lat] = tire(tyre_model,Fz,SR,SA,IA,P,V);
+    index = index+1;
+    Flist(index,1) = Lat;
+    Flist(index,2) = V*3.6;
+end
+
+plot(Flist(:,2),Flist(:,1))
+
+function [Lat,Long] = tire(tyre_model,Fz,SR,SA,IA,P,V) 
+SA = deg2rad(SA);
+P = convpres(P, 'psi', 'Pa');
+IA = deg2rad(IA);
+phit = 0;
+useMode = 121;
+inputsMF = [Fz SR SA IA phit V P];
+
+[ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+Long = 0.5904*Fz;
+Lat = abs(outMF(2));
+
+end
+
+% long tire coeff = 0.5904

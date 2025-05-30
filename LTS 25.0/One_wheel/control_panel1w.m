@@ -1,0 +1,140 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Run this program to obtain simulation results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+warning('off','all')
+warning
+
+close all
+clc
+
+%open LTS directory
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\LTS 24.1\')
+
+%open track model file
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\LTS 24.1\Track Model')
+track = 'JTC 2025 v2.mat'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m %JTC 2025 v1.mat
+load(track)
+
+%open tire model file
+
+cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\LTS 24.1\Tyre Model')
+HoosierR20 = mfeval.readTIR('HoosierR20.TIR'); %this tire no longitudinal data
+HoosierLC0 = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
+
+
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\LTS 24.1\Vehicle Model')
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Vehicle Mass (kg)                        % Air Density (kg/m^3)                   % Tyre Model
+mass = 274;                                air_density = 1.196;                     tyre_model = HoosierLC0;
+
+% Tyre Pressure (psi)                      % Longitudinal Slip                      % Turn Slip (1/m)
+P = 10;                                    long_slip = 0.145;                       phit = 0;
+
+% Coefficient of Drag (Straight)           % Coefficient of Lift (Straight)         % Coefficient of Lift (Corner)
+CDs = 1.54709;                             CLs = 4.116061;                          CLc = 3.782684;
+                   
+% Coefficient of Drag (Corner)             % Vehicle Wheelbase (m)                  % Wheel Radius (m)
+CDc = 1.410518;                            wheelbase = 1.531;                       R_wheel = 0.2032;
+
+% Static Camber (Radian)                   % Car Frontel Area (m^2)                 % Maximum Steering Angle (Degree)
+camber = 0;                                frontel_area = 1.157757;                 maxsteer = 32.372; 
+
+% Maximum Motor Torque (Nm)                % Final Drive Ratio                      % Motor Maximum Rotation Speed (RPM)
+max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 5500;
+
+% Lateral Tire Correlation Factor          % Longitudinal Tire Correlation Factor   % Longitudinal Tire Sensitivity 
+tc_lat = 0.6077;                           tc_long = 1;                             sen_long = 1;
+
+% Lateral Tire Sensitivity                 % Torque Setting
+sen_lat = 1;                               Ipeak = 0.6;
+
+% Tire Model Setting
+useMode = 121;
+
+
+% Rolling Start: 1  Static Start: 0
+rollingstart = 1;
+
+% Turn On: 1  Turn Off: 0  Temporary Off: 2
+masterswitch = 1;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
+
+tic
+
+[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main1w( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak);
+
+toc
+
+%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DO NOT CHANGE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+if masterswitch == 2
+    if ~isempty(pos)
+        figure('Position',[625,60,900,700])
+        plotclr(pos.x,pos.y,Final_LSP*3.6,'.');
+        sgtitle("Speed Profile on Track Model")
+    end
+end
+
+
+if masterswitch == 1
+    figure
+    plot(dist,Final_LSP*3.6);
+    % hold on
+    % plot(dist,BSP*3.6);
+    xlabel("Distance (m)")
+    ylabel("Speed (km/h)")
+    sgtitle("Speed Profile")
+end
+
+
+if masterswitch == 1
+    figure
+    plot(dist,Long_Accel);
+    xlabel("Distance (m)")
+    ylabel("Acceleration (G)")
+    sgtitle("Longitudinal Acceleration")
+end
+
+
+if masterswitch == 2
+    figure
+    plot(dist,Lat_Accel);
+    xlabel("Distance (m)")
+    ylabel("Acceleration (G)")
+    sgtitle("Lateral Acceleration")
+end
+
+
+if masterswitch == 2
+    figure
+    plot(dist,throttle_graph)
+    xlabel("Distance (m)")
+    ylabel("Throttle Percentage (%)")
+    sgtitle("Throttle Graph")
+    ylim([0,120])
+end
+
+
+if masterswitch == 2
+    figure
+    plot(dist,brake_graph);
+    xlabel("Distance (m)")
+    ylabel("Brake Percentage (%)")
+    sgtitle("Brake Graph")
+end
+
+
+
+

@@ -1,0 +1,429 @@
+% Sensitivity Study
+
+close all
+clear all
+clc
+
+%open LTS directory
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
+
+%open track model file
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
+track = '24 Endurance Fastest'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM %Skidpad_10m
+load(track)
+
+%open tire model file
+
+cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
+HoosierR20 = mfeval.readTIR('HoosierR20.TIR'); %this tire no longitudinal data
+HoosierLC0 = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
+
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Vehicle Mass (kg)                        % Air Density (kg/m^3)                   % Tyre Model
+mass = 260;                                air_density = 1.196;                     tyre_model = HoosierR20;
+
+% Tyre Pressure (psi)                      % Longitudinal Slip                      % Turn Slip (1/m)
+P = 10;                                    long_slip = 0.145;                       phit = 0;
+
+% Coefficient of Drag (Straight)           % Coefficient of Lift (Straight)         % Coefficient of Lift (Corner)
+CDs = 1.54709;                             CLs = 4.116061;                          CLc = 3.782684;
+                   
+% Coefficient of Drag (Corner)             % Vehicle Wheelbase (m)                  % Wheel Radius (m)
+CDc = 1.410518;                            wheelbase = 1.531;                       R_wheel = 0.2032;
+
+% Static Camber (Radian)                   % Car Frontel Area (m^2)                 % Maximum Steering Angle (Degree)
+camber = 0;                                frontel_area = 1.157757;                 maxsteer = 32.372; 
+
+% Maximum Motor Torque (Nm)                % Final Drive Ratio                      % Motor Maximum Rotation Speed (RPM)
+max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 5500;
+
+% Lateral Tire Correlation Factor          % Longitudinal Tire Correlation Factor   % Longitudinal Tire Sensitivity 
+tc_lat = 0.6077;                           tc_long = 0.6077;                        sen_long = 1;
+
+% Lateral Tire Sensitivity 
+sen_lat = 1;
+
+% Tire Model Setting
+useMode = 121;
+
+
+% Rolling Start: 1  Static Start: 0
+rollingstart = 1;
+
+% Turn On: 1  Turn Off: 0  Temporary Off: 2
+masterswitch = 1;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fprintf("Initiating Simulation... ..."+"\n")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Mass Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if false
+
+    % Range of weight change you are interest in (%)
+    range = 30;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+    fprintf("Progressing Weight Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 30;
+    mass_max = (1+range)*mass;
+    mass_min = (1-range)*mass;
+    i = 0;
+    len = ceil((mass_max-mass_min)/precision);
+    weight_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for m = mass_min:precision:mass_max
+        i = i+1;
+        [time,final_lsp] = main(m,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_mass = (m-mass)/mass*100;
+        weight_analysis(i,1) = percent_mass;
+        weight_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(weight_analysis(:,1),weight_analysis(:,2));
+    xlabel("Percentage Change in Weight (%)")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Weight Sensitivity Study")
+    
+    wa = interp1(weight_analysis(:,2),weight_analysis(:,1),query);  
+    fprintf("Weight change of "+wa+" percent will result in " +query+" percent change in lap time.\n")
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Longitudinal G Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if false
+
+    % Range of Longitudinal change you are interest in (%)
+    range = 20;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+
+    fprintf("Progressing Longitudinal G Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 0.02;
+    sen_long_max = (1+range)*sen_long;
+    sen_long_min = (1-range)*sen_long;
+    i = 0;
+    len = ceil((sen_long_max-sen_long_min)/precision);
+    long_G_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for sen = sen_long_min:precision:sen_long_max
+        i = i+1;
+        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_long_G = (sen-sen_long)/sen_long*100;
+        long_G_analysis(i,1) = percent_long_G;
+        long_G_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(long_G_analysis(:,1),long_G_analysis(:,2));
+    xlabel("Percentage Change in Longitudinal G (%)")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Longitudinal G Sensitivity Study")
+    
+    longa = interp1(long_G_analysis(:,2),long_G_analysis(:,1),query);  
+    fprintf("Longitudinal G change of "+longa+" percent will result in " +query+" percent change in lap time.\n")
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Lateral G Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if true
+
+    % Range of Lateral G change you are interested in (%)
+    range = 5;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+
+    fprintf("Progressing Lateral G Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 0.002;
+    sen_lat_max = (1+range)*sen_lat;
+    sen_lat_min = (1-range)*sen_lat;
+    i = 0;
+    len = ceil((sen_lat_max-sen_lat_min)/precision);
+    lat_G_analysis = zeros(len,2);
+    [BSP,Accel_LSP,final_lsp,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
+
+    for sen = sen_lat_min:precision:sen_lat_max
+        i = i+1;
+        [BSP,Accel_LSP,final_lsp,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+    mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode);
+        percent_time = (time-lts)/lts*100;
+        percent_lat_G = (sen-sen_lat)/sen_lat*100;
+        lat_G_analysis(i,1) = percent_lat_G;
+        lat_G_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(lat_G_analysis(:,1),lat_G_analysis(:,2));
+    xlabel("Percentage Change in Lateral G (%)")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Lateral G Sensitivity Study")
+
+    lata = interp1(lat_G_analysis(:,2),lat_G_analysis(:,1),query);  
+    fprintf("Lateral G change of "+lata+" percent will result in " +query+" percent change in lap time.\n")
+
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Aerodynamics Straight Line CL Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if false
+
+    % Range of CL change you are interested in (%)
+    range = 20;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+
+    fprintf("Progressing Straight Line CL Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 0.2;
+    CLs_max = (1+range)*CLs;
+    CLs_min = (1-range)*CLs;
+    i = 0;
+    len = ceil((CLs_max-CLs_min)/precision);
+    CLs_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for cls = CLs_min:precision:CLs_max
+        i = i+1;
+        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,cls,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_CLs = (cls-CLs)/CLs*100;
+        CLs_analysis(i,1) = cls;
+        CLs_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(CLs_analysis(:,1),CLs_analysis(:,2));
+    xlabel("Straight Line CL")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Straight Line CL Sensitivity Study")
+
+    %cla = interp1(CLs_analysis(:,2),CLs_analysis(:,1),query);  
+    %fprintf("Straight Line CL change of "+cla+" percent will result in " +query+" percent change in lap time.\n")
+
+
+end
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Aerodynamics Cornering CL Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if false
+
+    % Range of CL change you are interested in (%)
+    range = 20;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+
+    fprintf("Progressing Conering CL Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 0.2;
+    CLc_max = (1+range)*CLc;
+    CLc_min = (1-range)*CLc;
+    i = 0;
+    len = ceil((CLc_max-CLc_min)/precision);
+    CLc_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for clc = CLc_min:precision:CLc_max
+        i = i+1;
+        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,clc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_CLc = (clc-CLc)/CLc*100;
+        CLc_analysis(i,1) = percent_CLc;
+        CLc_analysis(i,2) = percent_time;
+        CLc_analysis(i,3) = clc;
+        CLc_analysis(i,4) = time;
+    end
+
+    figure
+    plot(CLc_analysis(:,1),CLc_analysis(:,2));
+    xlabel("Percentage Change in Cornering CL")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Cornering CL Sensitivity Study 1")
+
+    figure
+    plot(CLc_analysis(:,3),CLc_analysis(:,4));
+    xlabel("Cornering CL")
+    ylabel("Lap Time (s)")
+    sgtitle("Cornering CL Sensitivity Study 2")
+
+
+    %cla = interp1(CLs_analysis(:,2),CLs_analysis(:,1),query);  
+    %fprintf("Straight Line CL change of "+cla+" percent will result in " +query+" percent change in lap time.\n")
+
+
+end
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Aerodynamics Straight Line CD Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if false
+
+    % Range of CD change you are interested in (%)
+    range = 10;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+
+    fprintf("Progressing Straight Line CD Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 0.02;
+    CDs_max = (1+range)*CDs;
+    CDs_min = (1-range)*CDs;
+    i = 0;
+    len = ceil((CDs_max-CDs_min)/precision);
+    CDs_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for cds = CDs_min:precision:CDs_max
+        i = i+1;
+        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,cds,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_CDs = (cds-CDs)/CDs*100;
+        CDs_analysis(i,1) = cds;
+        CDs_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(CDs_analysis(:,1),CDs_analysis(:,2));
+    xlabel("Straight Line CD")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Straight Line CD Sensitivity Study")
+
+    %cda = interp1(CDs_analysis(:,2),CDs_analysis(:,1),query);  
+    %fprintf("Straight Line CD change of "+cda+" percent will result in " +query+" percent change in lap time.\n")
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Aerodynamics Cornering CD Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Enter settings of sensitivity study: 
+
+% Turn On: true  Turn Off: false
+if true
+
+    % Range of CD change you are interested in (%)
+    range = 10;
+
+    % What percentage change in lap time you wants to achieve (%)
+    query = -1;
+
+
+    fprintf("Progressing Cornering CD Sensitivity Study... ..."+"\n")
+    range = range/100;
+    precision = 0.02;
+    CDc_max = (1+range)*CDc;
+    CDc_min = (1-range)*CDc;
+    i = 0;
+    len = ceil((CDc_max-CDc_min)/precision);
+    CDc_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for cdc = CDc_min:precision:CDc_max
+        i = i+1;
+        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,cdc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_CDc = (cdc-CDc)/CDc*100;
+        CDc_analysis(i,1) = cdc;
+        CDc_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(CDc_analysis(:,1),CDc_analysis(:,2));
+    xlabel("Cornering CD")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("Cornering CD Sensitivity Study")
+
+    %cda = interp1(CDs_analysis(:,2),CDs_analysis(:,1),query);  
+    %fprintf("Straight Line CD change of "+cda+" percent will result in " +query+" percent change in lap time.\n")
+
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Drivetrain Fianl Drive Ratio Sensitivity Study %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+if false
+
+    precision = 0.1;
+
+
+    FDR_max = 5;
+    FDR_min = 1;
+
+    fprintf("Progressing Final Drive Ratio Sensitivity Study... ..."+"\n")
+    i = 0;
+    len = ceil((FDR_max-FDR_min)/precision)+1;
+    FDR_analysis = zeros(len,2);
+    [lts,~] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+
+    for fdr = FDR_min:precision:FDR_max
+        i = i+1;
+        [time,final_lsp] = main(mass,C2,dist,pos,air_density,frontel_area,CLc,CLs,CDc,CDs,tyre_model,camber,max_rpm,max_torque,fdr,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,maxsteer,rollingstart);
+        percent_time = (time-lts)/lts*100;
+        percent_FDR = (fdr-FDR)/FDR*100;
+        FDR_analysis(i,1) = fdr;
+        FDR_analysis(i,2) = percent_time;
+    end
+
+    figure
+    plot(FDR_analysis(:,1),FDR_analysis(:,2));
+    xlabel("Final Drive Ratio")
+    ylabel("Percentage Change in Lap Time (%)")
+    sgtitle("FDR Sensitivity Study")
+
+end
+
+clc
+fprintf("Simulation completed!"+"\n")

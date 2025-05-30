@@ -1,0 +1,40 @@
+% calculate longitudinal tire coefficient
+figure
+
+mass = 196+52; % khai was driving
+A = 1.157757;
+Den = 1.196;
+V = 12/3.6;
+CL = 4.116061;
+FDR = 3.36;
+R = 0.2032;
+FL = 0.5*A*CL*Den*V^2;
+Fz = mass*9.81+FL;
+pwteff=0.8;
+
+
+Ftyre = pwteff*0.5*220*FDR/R;
+coeff = Ftyre/Fz;
+fprintf("tire coeff "+coeff);
+
+Flist = zeros((10/0.1),2);
+index = 0;
+for V = 0:0.1:10
+    FL = 0.5*A*CL*Den*V^2;
+    Fz = mass*9.81+FL;
+    Long = Fz*coeff;
+    index = index+1;
+    Flist(index,1) = Long;
+    Flist(index,2) = V*3.6;
+end
+
+plot(Flist(:,2),Flist(:,1))
+
+% at 40kmh
+Vtest = 40/3.6;
+FL = 0.5*A*CL*Den*Vtest^2;
+Fz = mass*9.81+FL;
+Ftyretest = coeff*Fz;
+accelG = Ftyretest/((196+52)*9.81);
+fprintf("accel G "+accelG);
+
