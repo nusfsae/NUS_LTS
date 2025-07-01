@@ -1,8 +1,8 @@
 % Main Lap Time Simulation written in one single function
 
-function [BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main1w( ...
+function [BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph, angleChange] = main1w( ...
     mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer,max_rpm, ...
-    max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak)
+    max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak, Tractive_force, Speed)
 
 fprintf("Initiating Simulation... ..."+"\n");
 
@@ -10,11 +10,11 @@ dist1 = dist;
 
 if rollingstart == 1
     len=length(C2);
-    C2 = horzcat(C2,C2,C2);
-    pos = horzcat(pos,pos,pos);
-    dist2 = dist1+2*dist(len)-dist(len-1);
-    dist3 = dist2+2*dist(len)-dist(len-1);
-    dist = horzcat(dist,dist2,dist3);    
+    C2 = horzcat(C2,C2);
+    pos.x = horzcat(pos.x,pos.x);
+    pos.y = horzcat(pos.y,pos.y);
+    dist2 = dist1+dist(len); % + (dist from end point to start point)
+    dist = horzcat(dist,dist2);    
 end
 
 % Generate boundary speed profile
@@ -23,8 +23,10 @@ BSP = cornerProfile1w(mass,C2,air_density,frontel_area,CLc,tyre_model,camber,max
 
 fprintf("Generating Estimation Round... ..."+"\n");
 
+angleChange = AngleChange(pos.x, pos.y);
+
 % Generate Acceleration Speed Profile
-Accel_LSP = accelProfile1w(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R_wheel,max_torque,tc_long,sen_long,phit,P,Ipeak);
+Accel_LSP = accelProfile1w(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber,tyre_model,FDR,R_wheel,max_torque,tc_long,sen_long,phit,P,Ipeak, angleChange, Tractive_force, Speed);
 
 % Generate Limit Speed Profile
 Final_LSP = brakeProfile1w(C2,dist,camber,tyre_model,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,Accel_LSP,tc_long,sen_long,phit,P,useMode);
@@ -32,9 +34,9 @@ Final_LSP = brakeProfile1w(C2,dist,camber,tyre_model,mass,air_density,frontel_ar
 
 if rollingstart == 1
     len=length(C2);
-    BSP = BSP(len/3+1:len*2/3);
-    Accel_LSP = Accel_LSP(len/3+1:len*2/3);
-    Final_LSP = Final_LSP(len/3+1:len*2/3);
+    BSP = vertcat(BSP(floor(len/2) + 1 : floor(len * 3 /4)), BSP(floor(len/4):floor(len/2)));
+    Accel_LSP = vertcat(Accel_LSP(floor(len/2) + 1 : floor(len * 3 /4)), Accel_LSP(floor(len/4) + 1:floor(len/2)));
+    Final_LSP = vertcat(Final_LSP(floor(len/2) + 1 : floor(len * 3 /4)), Final_LSP(floor(len/4) + 1:floor(len/2)));
 end
 
 % Return lap time simulation, lapsetime: lap time at each data point

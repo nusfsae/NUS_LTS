@@ -1,0 +1,23 @@
+function angleChange = AngleChange(x, y)
+    n = length(x);
+    angleChange = zeros(n, 1);  % Initialise with zeros
+
+    for k = 2:n-1
+        % Vector from (k-1) to k
+        v1 = [x(k) - x(k-1), y(k) - y(k-1)];
+        % Vector from k to (k+1)
+        v2 = [x(k+1) - x(k), y(k+1) - y(k)];
+
+        % Normalise both vectors
+        v1 = v1 / norm(v1);
+        v2 = v2 / norm(v2);
+
+        % Angle between v1 and v2 (always positive)
+        dot_prod = dot(v1, v2);
+        dot_prod = max(min(dot_prod, 1), -1);  % Clamp for safety
+
+        angle = acos(dot_prod);  % Angle in radians
+
+        angleChange(k) = angle;
+    end
+end

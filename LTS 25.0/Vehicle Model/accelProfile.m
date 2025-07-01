@@ -1,6 +1,6 @@
 %this function return velocity profile after considering car acceleration
 function accel_profile = accelProfile(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,SAprofile,camber, ...
-    tyre_model,FDR,R,max_torque,tc_long,sen_long,phit,P,Ipeak,Long_Accel,cg_h,wheelbase,ab)
+    tyre_model,FDR,R,max_torque,tc_long,sen_long,phit,P,Ipeak,Long_Accel,cg_h,wheelbase,ab,angleChange,Tractive_force, Speed)
 
 track_len = length(C2);
 accel_profile = zeros(track_len,1);
@@ -37,7 +37,7 @@ for point = 1:(track_len-1)
     % Tyre maximum tractive force
 
     alpha = SA;
-    long_slip = 0.1;
+    long_slip = slip_ratio(alpha,angleChange(point));
     V = 10;   
 
     [~,Fx_f] = tires(tyre_model,Fz_f,alpha,long_slip,camber,P,V); 
@@ -49,7 +49,7 @@ for point = 1:(track_len-1)
     F_t= Long-Drag;
     
     % Powertrain maximum tractive force
-    F_powertrain = 0.9*Ipeak*220*FDR/R;
+    F_powertrain = interp1(Speed, Tractive_force, vel, "cubic");
 
     %calculate available acceleration remained
     F = min(F_t,F_powertrain);

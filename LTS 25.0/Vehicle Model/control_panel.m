@@ -7,23 +7,23 @@ clc
 
 %open LTS directory
 
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0')
+cd('D:\FSAEMain\LTS 25.0')
 
 %open track model file
 
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Track Model')
-track = 'JTC v2.mat'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m %JTC 2025 v1.mat %JTC v2.mat
+cd('D:\FSAEMain\LTS 25.0\Track Model')
+track = 'JTC 2025 v2.mat'; % 24 Autocross % 24 Endurance Fastest % 241013 JTC PM % Skidpad_10m %JTC 2025 v1.mat %JTC v2.mat
 load(track)
 
 %open tire model file
 
-cd ('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Tyre Model')
-HoosierR20 = mfeval.readTIR('HoosierR20.TIR'); %this tire no longitudinal data
-HoosierLC0 = mfeval.readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
+cd ('D:\FSAEMain\LTS 25.0\Tyre Model')
+HoosierR20 = readTIR('HoosierR20.TIR'); %this tire no longitudinal data
+HoosierLC0 = readTIR('Hoosier_6_18_10_LC0_C2000.TIR');
 
 
 
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
+cd('D:\FSAEMain\LTS 25.0\Vehicle Model')
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -55,6 +55,11 @@ sen_lat = 1;                               Ipeak = 0.6;
 % Tire Model Setting                       % CG Height                              % Aero Balance
 useMode = 121;                             cg_h = 0.256;                            ab = 0.5310665;
 
+%Accum Voltage                             %Kv Constant
+Accum_Voltage = 333.75;                    Voltage_constant = 14;
+
+%kW                                        %Conversion Factor
+power_cap = 80;                            conversion_factor = 9550;
 
 % Rolling Start: 1  Static Start: 0
 rollingstart = 1;
@@ -68,22 +73,29 @@ masterswitch = 1;
 
 tic
 
-% % Estimation Round with single-wheel model 
+% % Estimation Round with single-wheel model
 
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\One_wheel')
+[Tractive_force, Speed] = TractiveForce(max_torque, max_rpm, conversion_factor, power_cap, Ipeak, FDR, R_wheel);
 
-[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main1w( ...
+cd('D:\FSAEMain\LTS 25.0\One_wheel')
+
+[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph,angleChange] = main1w( ...
     mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
-    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak);
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak, Tractive_force, Speed);
 
 
 % % Precise Simulation Round with two-wheel model
 
-cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
+cd('D:\FSAEMain\LTS 25.0\Vehicle Model')
 
-[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph] = main( ...
+[BSP,Accel_LSP,Final_LSP,lap_time_sim,lapsetime,Long_Accel,Lat_Accel,throttle_graph,brake_graph,torque_dist] = main( ...
     mass,C2,dist,pos,air_density,tyre_model,P,long_slip,phit,CLc,CLs,CDc,CDs,frontel_area,camber,maxsteer, ...
-    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak,cg_h,Long_Accel,ab);
+    max_rpm,max_torque,FDR,R_wheel,tc_lat,tc_long,sen_lat,sen_long,wheelbase,rollingstart,useMode,Ipeak,cg_h,Long_Accel,ab, angleChange, Tractive_force, Speed);
+
+cd("D:\FSAEMain\LTS 25.0\Powertrain")
+[kWh_Usage, power_map] = predictEnergyUsage(torque_dist, Final_LSP, throttle_graph, dist, lapsetime);
+
+cd('D:\FSAEMain\LTS 25.0\Vehicle Model')
 
 toc
 

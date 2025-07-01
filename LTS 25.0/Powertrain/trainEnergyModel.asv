@@ -1,0 +1,115 @@
+%% TRAINING SCRIPT: trainEnergyModel.m
+
+% --------------------
+% Load + Preprocess Data
+% --------------------
+load('D:\FSAEMain\LTS 25.0\Vehicle Model\Test Run 12 Clean.mat')
+disp("Loading and filtering data...");
+
+% Extract filtered training data (example: skip braking)
+train_speed = [];
+train_torque = [];
+train_Current = [];
+train_throttle = [];
+train_power = [];
+
+for i = 1:length(Corr_Speed.Value)
+    if Brake_Pressure_Front.Value(i) < 0.2
+        train_speed = [train_speed; Corr_Speed.Value(1, i)];
+        train_torque = [train_torque; Motor_Torque__Updated_.Value(1, i)];
+        train_Current = [train_Current; BMS_Channels_Pack_Current.Value(1, i)];
+        train_throttle = [train_throttle; Throttle_Pedal.Value(1, i)];
+        train_power = [train_power; Power.Value(1, i)];
+    end
+end
+
+% --------------------
+% Normalisation
+% --------------------
+disp("Normalising inputs...");
+
+min_speed = min(train_speed); max_speed = max(train_speed);
+min_torque = min(train_torque); max_torque = max(train_torque);
+min_throttle = min(train_throttle); max_throttle = max(train_throttle);
+
+norm_speed = (train_speed - min_speed) / (max_speed - min_speed);
+norm_torque = (train_torque - min_torque) / (max_torque - min_torque);
+norm_throttle = (train_throttle - min_throttle) / (max_throttle - min_throttle);
+
+X = [norm_torque, norm_throttle, norm_speed];
+Y = train_power;
+
+% --------------------
+% Model Training
+% --------------------
+disp("Training models...");
+
+cv = cvpartition(length(Y), 'Holdout', 0.3);
+X_train = X(training(cv), :);
+X_test = X(test(cv), :);
+y_train = Y(training(cv));
+y_test = Y(test(cv));
+
+best_fit = struct('Degree', 0, 'Model', [], 'R_squared', 0, 'RMSE', Inf);
+
+for degree = 1:5
+    % Generate polynomial terms for the current degree using training data
+    polyTerms = polyfitn(X_train, y_train, degree);
+    
+    % Predict on the test set
+    y_pred = polyvaln(polyTerms, X_test);
+    
+    % Calculate R-squared and RMSE
+    SS_res = sum((y_test - y_pred).^2);
+    SS_tot = sum((y_test - mean(y_test)).^2);
+    R_squared = 1 - (SS_res / SS_tot);
+    RMSE = sqrt(mean((y_test - y_pred).^2));
+    
+    % Store metrics for this degree
+    R_squared_values(degree) = R_squared;
+    RMSE_values(degree) = RMSE;
+       
+    % Update best fit if the model improves more than 1 percent
+    if abs(best_fit.R_squared-R_squared) >= 0.01 % if the change in error is greater than 1%
+        best_fit.Degree = degree;
+        best_fit.Model = polyTerms;
+        best_fit.R_squared = R_squared;
+        best_fit.RMSE = RMSE;
+    end
+end
+
+% --------------------
+% Save Model + Metadata
+% --------------------
+disp("Saving model to EnergyModel.mat...");
+
+save('EnergyModel.mat', ...
+    'best_fit', ...
+    'min_speed', 'max_speed', ...
+    'min_torque', 'max_torque', ...
+    'min_throttle', 'max_throttle');
+
+% Display results
+disp('R-squared values for each polynomial degree:');
+disp(R_squared_values);
+disp('RMSE values for each polynomial degree:');
+disp(RMSE_values);
+disp('Best fit model:');
+disp(best_fit);
+
+% Initiating y = x line
+x = linspace(0,40,41);
+y = x;
+
+% Plot predicted vs. actual current draw for the best model
+predicted_current = polyvaln(best_fit.Model, X_test);
+figure;
+scatter(y_test, predicted_current);
+hold on
+plot(x,y,'r-'); 
+xlabel('Actual Power Draw');
+ylabel('Predicted Power Draw');
+title(['Predicted vs. Actual Power Draw - Best Model (Degree ', num2str(best_fit.Degree), ')']);
+grid on;
+
+disp("✅ Model training complete.");
