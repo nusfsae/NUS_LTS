@@ -12,6 +12,8 @@ cd ('D:\Patrick\VD SIM\LTS25\Tyre Model')
 tyre = 'R25B_V2';
 load(tyre)
 
+% parameter
+
 R = 0.2032;%wheel radius
 mass = 276;
 air_density = 1.293;
