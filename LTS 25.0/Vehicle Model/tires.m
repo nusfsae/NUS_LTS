@@ -1,14 +1,12 @@
 % Reformat Tire model function to clean up main function
-% All angles in degrees
-
+% Fz: Normal Load (N)
+% SR: Slip Ratio (unitless)
+% SA: Slip Angle (deg)
+% IA: Inclination Angle (deg)
+% P:  Tyre Pressure (Psi)
+% V:  Vehicle speed (m/s)
 
 function [Lat,Long] = tires(tyre_model,Fz,SR,SA,IA,P,V)
-
-if SA<8
-    Long = ((10-SA)/10)*1.1808*Fz;
-else
-    Long = 0;
-end
 
 SA = deg2rad(SA);
 P = convpres(P, 'psi', 'Pa');
@@ -21,6 +19,7 @@ inputsMF = [Fz SR SA IA phit V P];
 
 
 Lat = abs(outMF(2));
+Long = abs(outMF(1));
 
 end
 

@@ -1,0 +1,16 @@
+clear
+fdr = struct();
+fdr.time = zeros(10,1);
+fdr.FDR = zeros(10,1);
+for i = 1:10
+    FDR = 3+i/5;
+    run control_panel.m
+    fdr.time(i,1) = lap_time_sim;
+    fdr.FDR(i,2) = FDR;
+end
+figure
+plot(fdr.FDR,fdr.time);
+xlim([2 4])
+sgtitle("FDR for endurance 100Ipeak, 40% cooling lost, 360V")
+xlabel("FDR")
+ylabel("time")  

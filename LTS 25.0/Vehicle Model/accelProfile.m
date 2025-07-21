@@ -1,16 +1,16 @@
 %this function return velocity profile after considering car acceleration
-function accel_profile = accelProfile(dist,C2,BSP,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,SAprofile,camber, ...
-    tyre_model,FDR,R,max_torque,tc_long,sen_long,phit,P,Ipeak,Long_Accel,cg_h,wheelbase,ab)
+function [sim] = accelProfile(dist,C2,sim,mass,air_density,frontel_area,CLs,CLc,CDs,CDc,camber, ...
+    tyre_model,FDR,R,max_rpm,tc_long,sen_long,phit,P,Ipeak,Long_Accel,cg_h,wheelbase,ab)
 
 track_len = length(C2);
-accel_profile = zeros(track_len,1);
-%slip_ang = slip_angle(C2); % estimate slip angle for this track
+sim.accel(1,1) = 0;
+sim.speed(1,1) = 0;
 
 for point = 1:(track_len-1)
-
-    SA = SAprofile(point);    
+    
     longG = Long_Accel(point);
-    vel = accel_profile(point); 
+    
+    vel = sim.accel(point,1); 
     curv = abs(1/C2(point));
     V = vel;
 
@@ -33,37 +33,47 @@ for point = 1:(track_len-1)
     Fz_f = (Weight + Downforce*ab)/4 - (delta_W)/2;
     Fz_r = (Weight + Downforce*ab)/4 + (delta_W)/2;
 
-
     % Tyre maximum tractive force
-
-    alpha = SA;
+    alpha = 0;
     long_slip = 0.1;
-    V = 10;   
+      
 
-    [~,Fx_f] = tires(tyre_model,Fz_f,alpha,long_slip,camber,P,V); 
-    [~,Fx_r] = tires(tyre_model,Fz_r,alpha,long_slip,camber,P,V);     
+    [~,Fx_r] = tires(tyre_model,Fz_r,long_slip,alpha,camber,P,10);     
     
-    Long = sen_long*Fx_r*2;
+    Long = sen_long*tc_long*Fx_r*2;
     
     Drag = 0.5*air_density*(vel^2)*CD*frontel_area;%drag force at this speed
     F_t= Long-Drag;
     
     % Powertrain maximum tractive force
-    F_powertrain = 0.9*Ipeak*220*FDR/R;
+    if vel<24.03  %24.03 % 360V setting
+        F_powertrain = 0.6*0.8*Ipeak*220*FDR/R-Drag;
+    else        
+        v_max = (max_rpm/FDR)*pi*2*R/60; 
+        % v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting
+        v_weak = 86.5/3.6; % 360V setting
+        Iweak = ((220-0)/(v_weak-v_max))*vel+220-((220-0)/(v_weak-v_max))*v_weak; 
+        F_powertrain = 0.6*0.8*Ipeak*Iweak*FDR/R-Drag;
+    end
 
     %calculate available acceleration remained
     F = min(F_t,F_powertrain);
     avail_accel = F/mass; 
     
     %calculate max speed after accel
-    v_accel = sqrt((accel_profile(point))^2 + 2*avail_accel*(dist(point+1)-dist(point))); 
+    v_accel = sqrt((sim.accel(point,1))^2 + 2*avail_accel*(dist(point+1)-dist(point)));     
  
     %ensure the car wont exceed max corner speed
-    if v_accel > BSP(point+1) 
-        accel_profile(point+1) = BSP(point+1);                            
-    else                
-       accel_profile(point+1) = v_accel; %full acceleration                           
-    end       
+    if v_accel < sim.speed(point+1,1)              
+       sim.speed(point+1,1) = v_accel;
+       sim.accel(point+1,1) = v_accel;
+    else
+        sim.accel(point+1,1) = sim.speed(point+1,1);
+    end  
+    
+    if avail_accel>0
+        sim.torque(point,1) = avail_accel*mass*R;
+    end
 end
 end
 

@@ -24,10 +24,10 @@ for point = 1:(track_len-1)
     V = 10;   
 
     Reaction_f = 0.25*(mass*9.81+0.5*air_density*frontel_area*CL*vel^2);
-    [Lat,Long] = tires(tyre_model,Reaction_f,alpha,long_slip,camber,P,V); 
+    [~,Long] = tires(tyre_model,Reaction_f,long_slip,alpha,camber,P,V);  
     
     
-    Long = 4*tc_long*sen_long*Long;
+    Long = 2*tc_long*sen_long*Long;
     
     Drag = 0.5*air_density*(vel^2)*CD*frontel_area;%drag force at this speed
     F_t= Long-Drag;

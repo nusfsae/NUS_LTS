@@ -3,7 +3,7 @@
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 
 run control_panel;
-close all
+
 
 % Load data from MoTec
 %cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Motec Data')
@@ -34,19 +34,31 @@ close all
 
 % Load data from MoTec
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Motec Data')
-motec8 = load('DS2 Patrick Lap 3');
+% motec8 = load('Accel 25 49134.mat');
+motec8 = load('Endurance 25 fastest.mat');
 speed8 = motec8.Corr_Speed.Value;
 time8 = motec8.Corr_Speed.Time;
 distance8 = motec8.Corr_Dist.Value;
 distance8 = distance8 - distance8(1);
 time8 = time8 - time8(1);
+accel8 = zeros(length(speed8),1);
+for i = 1:length(speed8)-1
+    accel8(i) = (((speed8(i+1)/3.6)^2 - (speed8(i)/3.6)^2)/(2*(distance8(i+1)-distance8(i))))/9.81;    
+end
+accel8(length(speed8)) = accel8(length(speed8)-1);
 
+% compare longG
+% figure
+% plot(dist,accel8);
+% hold on
+% plot(dist,sim.longG,'DisplayName', 'Sim');
 
 % Compare speed
 figure
-plot(distance8,speed8,'DisplayName', 'Patrick Driving');
+plot(distance8,speed8,'DisplayName', 'Khai');
 xlabel("Distance (m)")
 ylabel("Speed (km/h)")
+ylim([0 130])
 sgtitle("Speed Profile Validation")
 
 
@@ -57,7 +69,8 @@ sgtitle("Speed Profile Validation")
 %plot(distance8,speed6,'DisplayName', 'MoTec Data 3');
  
 hold on
-plot(dist,Final_LSP*3.6,'DisplayName', 'Patrick Simulation')
+plot(dist,sim.speed*3.6,'DisplayName', 'Sim');
+
 legend
 
 % Compare Lap Time

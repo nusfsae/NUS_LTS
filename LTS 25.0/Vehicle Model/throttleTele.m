@@ -1,8 +1,7 @@
-function throttle_graph = throttleTele(lsp,dist,max_torque,FDR,R,mass)
-Long_Accel = longGTele(lsp,dist);
-len = length(lsp);
-
-throttle_graph = zeros(len,1);
+function sim = throttleTele(sim,dist,max_torque,FDR,R,mass)
+simLong = longGTele(sim,dist);
+Long_Accel = simLong.longG;
+len = length(sim.speed);
 
 for i = 1:len
     actual = 0;
@@ -11,10 +10,10 @@ for i = 1:len
         actual = Long_Accel(i);    
     end
     % Powertrain maximum tractive force
-    if lsp(i)<23.6298
+    if sim.speed(i)<23.6298
         torque = max_torque;
     else
-        torque = -5.4*lsp(i) + 297.181;
+        torque = -5.4*sim.speed(i) + 297.181;
     end
     F_powertrain = torque*FDR/R;
     
@@ -23,6 +22,6 @@ for i = 1:len
     if tt>100
         tt =100;
     end
-    throttle_graph(i) = tt; 
+    sim.throttle(i) = tt; 
 end
 end
