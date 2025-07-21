@@ -14,9 +14,8 @@ for vel = v1:-0.1:v2
     alpha = 0; % assume no sideslip when braking
     long_slip = 0.1; % assume braking at optimized SR    
     V = 10; % anyhow give a number to tire model    
-
-
-    [Lat,Long] = tires(tyre_model,Reaction_f,alpha,long_slip,camber,P,V); 
+    
+    [Lat,Long] = tires(tyre_model,Reaction_f,long_slip,alpha,camber,P,10);
     
     Long = 4*tc_long*sen_long*Long;% Tire correlation factor
      

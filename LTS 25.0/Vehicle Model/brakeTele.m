@@ -1,8 +1,8 @@
-function brake_graph = brakeTele(lsp,dist,mass,den,A,CLs,CLc,CDs,CDc,camber,C2,tyre_model,P,tc_long)
+function sim = brakeTele(sim,dist,mass,den,A,CLs,CLc,CDs,CDc,camber,C2,tyre_model,P,tc_long)
 
-Long_Accel = longGTele(lsp,dist);
-len = length(lsp);
-brake_graph = zeros(len,1);
+simLong = longGTele(sim,dist);
+Long_Accel = simLong.longG;
+len = length(sim.speed);
 P = convpres(P, 'psi', 'Pa');
 
 for i = 1:len
@@ -17,7 +17,7 @@ for i = 1:len
     end
 
     actual = 0;
-    v = lsp(i);
+    v = sim.speed(i);
     
 
 
@@ -48,7 +48,7 @@ for i = 1:len
         bb=0;
     end
 
-    brake_graph(i) = bb; 
+    sim.brake(i) = bb; 
     
 
 end

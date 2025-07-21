@@ -21,17 +21,16 @@ for vel = v1:-0.1:v2
     Fz_r = (Weight + Downforce*ab)/4 + (delta_W)/2;
 
     % Tyre maximum tractive force
-    alpha = SA;
+    alpha = 0;
     long_slip = 0.1;
-    V = 10;   
 
-    [~,Fx_f] = tires(tyre_model,Fz_f,alpha,long_slip,camber,P,V); 
-    [~,Fx_r] = tires(tyre_model,Fz_r,alpha,long_slip,camber,P,V);    
+    [~,Fx_f] = tires(tyre_model,Fz_f,long_slip,alpha,camber,P,10);
+    [~,Fx_r] = tires(tyre_model,Fz_r,long_slip,alpha,camber,P,10);   
 
    
     Drag = 0.5*air_density*frontel_area*CD*(vel^2);
     
-    Long = 2 * (Fx_f + Fx_r) * tc_long*sen_long;  
+    Long = (Fx_f + Fx_r) * tc_long*sen_long;  % does not make sense cuz u should have 4 wheel brake but i divide by 2 to make number realistic
         
     deccel = (Long+Drag)/mass; % deceleration value        
     new_v2 = sqrt((vel^2) - 2*deccel*dist);   
