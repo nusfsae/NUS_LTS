@@ -4,6 +4,7 @@
 %open track model file
 cd('D:\Patrick\VD SIM\LTS25\Track Model')
 
+% select track
 track = '75m Accel';
 load(track)
 
