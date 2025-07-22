@@ -53,7 +53,7 @@ for point = 1:(track_len-1)
         % v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting
         v_weak = 86.5/3.6; % 360V setting
         Iweak = ((220-0)/(v_weak-v_max))*vel+220-((220-0)/(v_weak-v_max))*v_weak; 
-        F_powertrain = 0.6*0.8*Ipeak*Iweak*FDR/R-Drag;
+        F_powertrain = 0.6*0.8*Ipeak*Iweak*FDR/R;
     end
 
     %calculate available acceleration remained
