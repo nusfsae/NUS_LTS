@@ -26,7 +26,8 @@ tic
 % % Create empty performance envelope GG
 GG = struct();
 Vnum = floor(v_max-10)-10;        % number of speed variations
-Gnum = 50;                     % number of longG variations
+Gnum = 50;                        % number of longG variations
+Vstart = 10;
 GG.speed = struct();
 for i = 1:Vnum
     GG.speed(i).ax = zeros(1,Gnum);
@@ -40,42 +41,36 @@ for i = 1:Vnum
     GG.speed(i).Sar = zeros(1,Gnum);
 end
 
-% % Create required cornering G envelope
-% require = struct();
-% curvnum = 300;                   % 0.1:0.1:30 turn radius (m)
-% latnum = 300;                    % 0.1:0.01:3 lateral acceleration (G)
-% require.curv = struct();
-% for i = 1:latnum
-%     require.curv(i).speed = zeros(1,latnum);
-%     require.curv(i).lateral = zeros(1,latnum);
-% end
-% for i = 1:curvnum
-%     curvature = i/10;
-%     for lateral = 0:0.01:latnum/0.01
-%         speed = sqrt(lateral*curvature/9.81);
-%         require.curv(i).speed = speed;
-%         require.curv(i).lateral = lateral;
-%     end
-% end
-
 
 % % Steady State Speed Setting
-for V = 10:floor(v_max)
-    % % define variable constraints
+for i = 1:floor(v_max)-Vstart
+    V = i+9;
+    GG.speed(i).speed = V;
+    % define variable constraints
     % relax slip angle at high speed
-    if V>=25
-        maxSa = deg2rad(12);
-    else
+    if V >= 17 && V <= 23
         maxSa = deg2rad(8);
+    elseif V > 23 && V <= 25 || V <= 14
+        maxSa = deg2rad(10);
+    elseif V > 25 && V <= 30 
+        maxSa = deg2rad(12);
+    elseif V > 30 && V <= 33
+        maxSa = deg2rad(20);
+    elseif V>33
+        maxSa = deg2rad(22);
+    else
+        maxSa = deg2rad(5);
     end
+    maxBeta = deg2rad(20);
     % relax yaw rate at high speed
-    if V>=20
+    if V >= 20 && V <= 30
+        maxDpsi = deg2rad(120);
+    elseif V>30
         maxDpsi = deg2rad(140);
     else
         maxDpsi = deg2rad(90);
     end
-    maxBeta = deg2rad(20);
-    maxSxf = 0.1;    
+    maxSxf = 0.1;
     maxSxr = 0.1;
 
     % % Braking G Solver
@@ -95,15 +90,15 @@ for V = 10:floor(v_max)
     s_opts.print_level = 5;
     prob.solver('ipopt', p_opts, s_opts);
     x = prob.solve();
-    GG.speed(V).ax(Gnum) = x.value(ax);
-    GG.speed(V).ay(Gnum) = x.value(ay);
-    GG.speed(V).delta(Gnum) = x.value(delta);
-    GG.speed(V).beta(Gnum) = x.value(beta);
-    GG.speed(V).dpsi(Gnum) = x.value(dpsi);
-    GG.speed(V).Sxf(Gnum) = x.value(Sxf);
-    GG.speed(V).Sxr(Gnum) = x.value(Sxr);
-    GG.speed(V).Sar(Gnum) = x.value(Sar);
-    GG.speed(V).Saf(Gnum) = x.value(Saf);
+    GG.speed(i).ax(Gnum) = x.value(ax);
+    GG.speed(i).ay(Gnum) = x.value(ay);
+    GG.speed(i).delta(Gnum) = x.value(delta);
+    GG.speed(i).beta(Gnum) = x.value(beta);
+    GG.speed(i).dpsi(Gnum) = x.value(dpsi);
+    GG.speed(i).Sxf(Gnum) = x.value(Sxf);
+    GG.speed(i).Sxr(Gnum) = x.value(Sxr);
+    GG.speed(i).Sar(Gnum) = x.value(Sar);
+    GG.speed(i).Saf(Gnum) = x.value(Saf);
 
 
     % Acceleration G Solver
@@ -122,19 +117,19 @@ for V = 10:floor(v_max)
     % optimization results
     prob.solver('ipopt');
     x = prob.solve();
-    GG.ax(1) = x.value(ax);
-    GG.ay(1) = x.value(ay);
-    GG.delta(1) = x.value(delta);
-    GG.beta(1) = x.value(beta);
-    GG.dpsi(1) = x.value(dpsi);
-    GG.Sxf(1) = x.value(Sxf);
-    GG.Sxr(1) = x.value(Sxr);
-    GG.Sar(1) = x.value(Sar);
-    GG.Saf(1) = x.value(Saf);
+    GG.speed(i).ax(1) = x.value(ax);
+    GG.speed(i).ay(1) = x.value(ay);
+    GG.speed(i).delta(1) = x.value(delta);
+    GG.speed(i).beta(1) = x.value(beta);
+    GG.speed(i).dpsi(1) = x.value(dpsi);
+    GG.speed(i).Sxf(1) = x.value(Sxf);
+    GG.speed(i).Sxr(1) = x.value(Sxr);
+    GG.speed(i).Sar(1) = x.value(Sar);
+    GG.speed(i).Saf(1) = x.value(Saf);
 
 
     % Spread equally longitudinal G values across performance envelope
-    GG.ax = linspace(GG.speed(V).ax(1),GG.speed(V).ax(Gnum),length(GG.speed(V).ax));
+    GG.speed(i).ax = linspace(GG.speed(i).ax(1),GG.speed(i).ax(Gnum),length(GG.speed(i).ax));
 
 
     % Power Margin Lateral G Solver
@@ -149,7 +144,7 @@ for V = 10:floor(v_max)
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
     % define constraints
-    prob.subject_to(ax == GG.ax(1));
+    prob.subject_to(ax == GG.speed(i).ax(1));
     prob.subject_to(Mz == 0);
     prob.subject_to(ay-V*dpsi/9.81 == 0);
     prob.subject_to(-maxSa<=Saf<=maxSa);
@@ -157,15 +152,15 @@ for V = 10:floor(v_max)
     % optimization results
     prob.solver('ipopt');
     x = prob.solve();
-    GG.speed(V).ax(2) = x.value(ax);
-    GG.speed(V).ay(2) = x.value(ay);
-    GG.speed(V).delta(2) = x.value(delta);
-    GG.speed(V).beta(2) = x.value(beta);
-    GG.speed(V).dpsi(2) = x.value(dpsi);
-    GG.speed(V).Sxf(2) = x.value(Sxf);
-    GG.speed(V).Sxr(2) = x.value(Sxr);
-    GG.speed(V).Sar(2) = x.value(Sar);
-    GG.speed(V).Saf(2) = x.value(Saf);
+    GG.speed(i).ax(2) = x.value(ax);
+    GG.speed(i).ay(2) = x.value(ay);
+    GG.speed(i).delta(2) = x.value(delta);
+    GG.speed(i).beta(2) = x.value(beta);
+    GG.speed(i).dpsi(2) = x.value(dpsi);
+    GG.speed(i).Sxf(2) = x.value(Sxf);
+    GG.speed(i).Sxr(2) = x.value(Sxr);
+    GG.speed(i).Sar(2) = x.value(Sar);
+    GG.speed(i).Saf(2) = x.value(Saf);
 
 
     % Lateral G Solver
@@ -181,7 +176,7 @@ for V = 10:floor(v_max)
         prob.set_initial(Sxf,0);
         prob.set_initial(Sxr,0);
         % define constraints
-        prob.subject_to(ax == GG.ax(lat));
+        prob.subject_to(ax == GG.speed(i).ax(lat));
         prob.subject_to(Mz == 0);
         prob.subject_to(ay-V*dpsi/9.81 == 0);
         prob.subject_to(-maxSa<=Saf<=maxSa);
@@ -189,22 +184,54 @@ for V = 10:floor(v_max)
         % optimization results
         prob.solver('ipopt');
         y = prob.solve();
-        GG.speed(V).ax(lat) = y.value(ax);
-        GG.speed(V).ay(lat) = y.value(ay);
-        GG.speed(V).delta(lat) = y.value(delta);
-        GG.speed(V).beta(lat) = y.value(beta);
-        GG.speed(V).dpsi(lat) = y.value(dpsi);
-        GG.speed(V).Sxf(lat) = y.value(Sxf);
-        GG.speed(V).Sxr(lat) = y.value(Sxr);
-        GG.speed(V).Sar(lat) = y.value(Sar);
-        GG.speed(V).Saf(lat) = y.value(Saf);
+        GG.speed(i).ax(lat) = y.value(ax);
+        GG.speed(i).ay(lat) = y.value(ay);
+        GG.speed(i).delta(lat) = y.value(delta);
+        GG.speed(i).beta(lat) = y.value(beta);
+        GG.speed(i).dpsi(lat) = y.value(dpsi);
+        GG.speed(i).Sxf(lat) = y.value(Sxf);
+        GG.speed(i).Sxr(lat) = y.value(Sxr);
+        GG.speed(i).Sar(lat) = y.value(Sar);
+        GG.speed(i).Saf(lat) = y.value(Saf);
     end
+    z = i * ones(size(GG.speed(i).ax));  
+    plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
+    hold on
 end
 
 
+% % Create cornering G performance envelope
+performance = struct();
+Rnum = 20;
+performance.speed = zeros(1,Rnum);
+performance.radius = zeros(1,Rnum);
+corner = casadi.Opti();
+for radius = 1:Rnum
+    % define variables
+    speed = corner.variable(); corner.subject_to(0<=speed<=v_max);
+    % require lateral acceleration (G)
+    areq = speed^2/radius/9.81;
+    % available lateral acceleration (G)
+    ay = interp1(GG.speed.speed,max(GG.speed(floor(speed)).ay),speed);
+    % constraints
+    corner.subject_to(ay>=areq);
+    % objective
+    corner.minimize(-speed);
+    % initial guess
+    corner.set_initial(speed=1);
+    % solve cornering speed
+    vy = corner.solver('ipopt');
+    performance.speed(radius) = vy.value(speed);
+    performance.radius(radius) = radius;
+end
 
-figure
-plot(GG.speed(V).ay,GG.speed(V).ax)
+
+    
+
+
+% 
+% figure
+% plot(GG.speed(i).ay,GG.speed(i).ax)
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))

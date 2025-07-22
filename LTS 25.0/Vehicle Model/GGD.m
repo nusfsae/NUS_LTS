@@ -26,7 +26,8 @@ tic
 % % Create empty performance envelope GG
 GG = struct();
 Vnum = floor(v_max-10)-10;        % number of speed variations
-Gnum = 50;                     % number of longG variations
+Gnum = 50;                        % number of longG variations
+Vstart = 10;
 GG.speed = struct();
 for i = 1:Vnum
     GG.speed(i).ax = zeros(1,Gnum);
@@ -40,31 +41,14 @@ for i = 1:Vnum
     GG.speed(i).Sar = zeros(1,Gnum);
 end
 
-% % Create required cornering G envelope
-% require = struct();
-% curvnum = 300;                   % 0.1:0.1:30 turn radius (m)
-% latnum = 300;                    % 0.1:0.01:3 lateral acceleration (G)
-% require.curv = struct();
-% for i = 1:latnum
-%     require.curv(i).speed = zeros(1,latnum);
-%     require.curv(i).lateral = zeros(1,latnum);
-% end
-% for i = 1:curvnum
-%     curvature = i/10;
-%     for lateral = 0:0.01:latnum/0.01
-%         speed = sqrt(lateral*curvature/9.81);
-%         require.curv(i).speed = speed;
-%         require.curv(i).lateral = lateral;
-%     end
-% end
-
 
 % % Steady State Speed Setting
-for i = 1:floor(v_max)-10
+for i = 1:floor(v_max)-Vstart
     V = i+9;
+    GG.speed(i).speed = V;
     % define variable constraints
     % relax slip angle at high speed
-    if V > 17 && V <= 23
+    if V >= 17 && V <= 23
         maxSa = deg2rad(8);
     elseif V > 23 && V <= 25 || V <= 14
         maxSa = deg2rad(10);
@@ -75,7 +59,7 @@ for i = 1:floor(v_max)-10
     elseif V>33
         maxSa = deg2rad(22);
     else
-        maxSa = deg2rad(6);
+        maxSa = deg2rad(5);
     end
     maxBeta = deg2rad(20);
     % relax yaw rate at high speed
@@ -145,7 +129,7 @@ for i = 1:floor(v_max)-10
 
 
     % Spread equally longitudinal G values across performance envelope
-    GG.ax = linspace(GG.speed(i).ax(1),GG.speed(i).ax(Gnum),length(GG.speed(i).ax));
+    GG.speed(i).ax = linspace(GG.speed(i).ax(1),GG.speed(i).ax(Gnum),length(GG.speed(i).ax));
 
 
     % Power Margin Lateral G Solver
@@ -160,7 +144,7 @@ for i = 1:floor(v_max)-10
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
     % define constraints
-    prob.subject_to(ax == GG.ax(1));
+    prob.subject_to(ax == GG.speed(i).ax(1));
     prob.subject_to(Mz == 0);
     prob.subject_to(ay-V*dpsi/9.81 == 0);
     prob.subject_to(-maxSa<=Saf<=maxSa);
@@ -192,7 +176,7 @@ for i = 1:floor(v_max)-10
         prob.set_initial(Sxf,0);
         prob.set_initial(Sxr,0);
         % define constraints
-        prob.subject_to(ax == GG.ax(lat));
+        prob.subject_to(ax == GG.speed(i).ax(lat));
         prob.subject_to(Mz == 0);
         prob.subject_to(ay-V*dpsi/9.81 == 0);
         prob.subject_to(-maxSa<=Saf<=maxSa);
@@ -210,10 +194,44 @@ for i = 1:floor(v_max)-10
         GG.speed(i).Sar(lat) = y.value(Sar);
         GG.speed(i).Saf(lat) = y.value(Saf);
     end
+
+    % store maximum ay at each speed
+    GG.speed(i).aymax = max(GG.speed(i).ay);
+
+    % 3D plot GG diagram
     z = i * ones(size(GG.speed(i).ax));  
     plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
     hold on
 end
+
+
+% % Create cornering G performance envelope
+performance = struct();
+Rnum = 20;
+performance.speed = zeros(1,Rnum);
+performance.radius = zeros(1,Rnum);
+corner = casadi.Opti();
+for radius = 1:Rnum
+    % define variables
+    speed = corner.variable(); corner.subject_to(0<=speed<=v_max);
+    % require lateral acceleration (G)
+    areq = speed^2/radius/9.81;
+    % available lateral acceleration (G)
+    ay = interp1(GG.speed.speed,GG.speed.ay,speed);
+    % constraints
+    corner.subject_to(ay>=areq);
+    % objective
+    corner.minimize(-speed);
+    % initial guess
+    corner.set_initial(speed=1);
+    % solve cornering speed
+    vy = corner.solver('ipopt');
+    performance.speed(radius) = vy.value(speed);
+    performance.radius(radius) = radius;
+end
+
+
+    
 
 
 % 
