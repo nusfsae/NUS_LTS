@@ -60,20 +60,28 @@ GG.Sar = zeros(1,Gnum);
 
 
 % % Steady State Speed Setting
-% for i = 25
-% V = i; % (m/s)
-V = 25; % (m/s)
+V = 26; % (m/s)
 
 % define variable constraints
 % relax slip angle at high speed
-if V>=25
-    maxSa = deg2rad(12);
-else
+if V > 17 && V <= 23
     maxSa = deg2rad(8);
+elseif V > 23 && V <= 25 || V <= 14
+    maxSa = deg2rad(10);
+elseif V > 25 && V <= 30 
+    maxSa = deg2rad(12);
+elseif V > 30 && V <= 33
+    maxSa = deg2rad(20);
+elseif V>33
+    maxSa = deg2rad(22);
+else
+    maxSa = deg2rad(6);
 end
 maxBeta = deg2rad(20);
 % relax yaw rate at high speed
-if V>=20
+if V >= 20 && V <= 30
+    maxDpsi = deg2rad(120);
+elseif V>30
     maxDpsi = deg2rad(140);
 else
     maxDpsi = deg2rad(90);

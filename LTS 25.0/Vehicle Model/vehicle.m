@@ -23,11 +23,10 @@ Sar = atan((dy - lr*dpsi)/dx);
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
 % Powertrian limit
-if V<22.2  %24.03 % 360V setting
+v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting % v_weak = 86.5/3.6; % 360V setting
+if V < v_weak  %24.03 % 360V setting
     tractive = 0.8*Ipeak*220*FDR/R-Drag;
-else
-    v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting
-    v_weak = 86.5/3.6; % 360V setting
+else    
     Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak;
     tractive = 0.8*Ipeak*Iweak*FDR/R;
 end

@@ -25,7 +25,7 @@ import casadi.*
 tic
 % % Create empty performance envelope GG
 GG = struct();
-Vnum = floor(v_max-10);                     % number of speed variations
+Vnum = floor(v_max-10)-10;        % number of speed variations
 Gnum = 50;                     % number of longG variations
 GG.speed = struct();
 for i = 1:Vnum
@@ -60,27 +60,34 @@ end
 
 
 % % Steady State Speed Setting
-for i = 25
-    V = i; % (m/s)
-    % V = 34; % (m/s)
-
+for i = 1:floor(v_max)-10
+    V = i+9;
     % define variable constraints
     % relax slip angle at high speed
-    if V>=25
-        maxSa = deg2rad(12);
-    else
+    if V > 17 && V <= 23
         maxSa = deg2rad(8);
+    elseif V > 23 && V <= 25 || V <= 14
+        maxSa = deg2rad(10);
+    elseif V > 25 && V <= 30 
+        maxSa = deg2rad(12);
+    elseif V > 30 && V <= 33
+        maxSa = deg2rad(20);
+    elseif V>33
+        maxSa = deg2rad(22);
+    else
+        maxSa = deg2rad(6);
     end
     maxBeta = deg2rad(20);
     % relax yaw rate at high speed
-    if V>=20
+    if V >= 20 && V <= 30
+        maxDpsi = deg2rad(120);
+    elseif V>30
         maxDpsi = deg2rad(140);
     else
         maxDpsi = deg2rad(90);
     end
     maxSxf = 0.1;
     maxSxr = 0.1;
-
 
     % % Braking G Solver
     prob = [];
@@ -126,15 +133,15 @@ for i = 25
     % optimization results
     prob.solver('ipopt');
     x = prob.solve();
-    GG.ax(1) = x.value(ax);
-    GG.ay(1) = x.value(ay);
-    GG.delta(1) = x.value(delta);
-    GG.beta(1) = x.value(beta);
-    GG.dpsi(1) = x.value(dpsi);
-    GG.Sxf(1) = x.value(Sxf);
-    GG.Sxr(1) = x.value(Sxr);
-    GG.Sar(1) = x.value(Sar);
-    GG.Saf(1) = x.value(Saf);
+    GG.speed(i).ax(1) = x.value(ax);
+    GG.speed(i).ay(1) = x.value(ay);
+    GG.speed(i).delta(1) = x.value(delta);
+    GG.speed(i).beta(1) = x.value(beta);
+    GG.speed(i).dpsi(1) = x.value(dpsi);
+    GG.speed(i).Sxf(1) = x.value(Sxf);
+    GG.speed(i).Sxr(1) = x.value(Sxr);
+    GG.speed(i).Sar(1) = x.value(Sar);
+    GG.speed(i).Saf(1) = x.value(Saf);
 
 
     % Spread equally longitudinal G values across performance envelope
@@ -203,12 +210,15 @@ for i = 25
         GG.speed(i).Sar(lat) = y.value(Sar);
         GG.speed(i).Saf(lat) = y.value(Saf);
     end
+    z = i * ones(size(GG.speed(i).ax));  
+    plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
+    hold on
 end
 
 
-
-figure
-plot(GG.speed(i).ay,GG.speed(i).ax)
+% 
+% figure
+% plot(GG.speed(i).ay,GG.speed(i).ax)
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))
