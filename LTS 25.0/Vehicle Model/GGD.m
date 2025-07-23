@@ -205,6 +205,14 @@ for i = 1:floor(v_max)-Vstart
 end
 
 
+% % Extract maximum performance at each speed
+ymax = zeros(2,length(GG.speed));
+for i = 1:length(GG.speed)
+    ymax(1,i) = GG.speed(i).speed;
+    ymax(2,i) = GG.speed(i).aymax;
+end
+
+
 % % Create cornering G performance envelope
 performance = struct();
 Rnum = 20;
@@ -217,7 +225,7 @@ for radius = 1:Rnum
     % require lateral acceleration (G)
     areq = speed^2/radius/9.81;
     % available lateral acceleration (G)
-    ay = interp1(GG.speed.speed,GG.speed.ay,speed);
+    ay = interp1(ymax(1,:),ymax(2,:),speed);
     % constraints
     corner.subject_to(ay>=areq);
     % objective
