@@ -43,7 +43,7 @@ end
 
 
 % % Steady State Speed Setting
-for i = 1:floor(v_max)-Vstart
+for i = 15:3:floor(v_max)-Vstart
     V = i+9;
     GG.speed(i).speed = V;
     % define variable constraints
@@ -63,12 +63,16 @@ for i = 1:floor(v_max)-Vstart
     end
     maxBeta = deg2rad(20);
     % relax yaw rate at high speed
-    if V >= 20 && V <= 30
-        maxDpsi = deg2rad(120);
-    elseif V>30
+    if V>30
         maxDpsi = deg2rad(140);
     else
         maxDpsi = deg2rad(90);
+    end
+    if V == 20
+        maxDpsi = deg2rad(120);
+    end
+    if 21<=V<=22
+        maxDpsi = deg2rad(100);
     end
     maxSxf = 0.1;
     maxSxr = 0.1;
@@ -90,7 +94,7 @@ for i = 1:floor(v_max)-Vstart
     s_opts.print_level = 5;
     prob.solver('ipopt', p_opts, s_opts);
     x = prob.solve();
-    GG.speed(i).ax(Gnum) = x.value(ax);
+    GG.speed(i).ax(Gnum) = x.value(ax)-Drag/mass;
     GG.speed(i).ay(Gnum) = x.value(ay);
     GG.speed(i).delta(Gnum) = x.value(delta);
     GG.speed(i).beta(Gnum) = x.value(beta);
@@ -113,11 +117,11 @@ for i = 1:floor(v_max)-Vstart
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
     % define constraints
-    prob.subject_to(ax<=Gtractive);
+    prob.subject_to(ax<=atractive);
     % optimization results
     prob.solver('ipopt');
     x = prob.solve();
-    GG.speed(i).ax(1) = x.value(ax);
+    GG.speed(i).ax(1) = x.value(ax)-Drag/mass;
     GG.speed(i).ay(1) = x.value(ay);
     GG.speed(i).delta(1) = x.value(delta);
     GG.speed(i).beta(1) = x.value(beta);
@@ -146,7 +150,7 @@ for i = 1:floor(v_max)-Vstart
     % define constraints
     prob.subject_to(ax == GG.speed(i).ax(1));
     prob.subject_to(Mz == 0);
-    prob.subject_to(ay-V*dpsi/9.81 == 0);
+    prob.subject_to(ay-V*dpsi == 0);
     prob.subject_to(-maxSa<=Saf<=maxSa);
     prob.subject_to(-maxSa<=Sar<=maxSa);
     % optimization results
@@ -178,7 +182,7 @@ for i = 1:floor(v_max)-Vstart
         % define constraints
         prob.subject_to(ax == GG.speed(i).ax(lat));
         prob.subject_to(Mz == 0);
-        prob.subject_to(ay-V*dpsi/9.81 == 0);
+        prob.subject_to(ay-V*dpsi == 0);
         prob.subject_to(-maxSa<=Saf<=maxSa);
         prob.subject_to(-maxSa<=Sar<=maxSa);
         % optimization results
@@ -221,13 +225,13 @@ performance.radius = zeros(1,Rnum);
 for v = 1:length(ymax)
     speed = ymax(1,v);
     ay = ymax(2,v);
-    radius = speed^2/(ay*9.81);
+    radius = speed^2/(ay);
     performance.speed(v) = speed;
     performance.radius(v) = radius;
 end
-ppRadius = spline(performance.radius,performance.speed);
-figure
-plot(ppval(ppRadius,[0:100]),[0:100]);
+% interpolate radius at each speed
+PerfEnv = spline(performance.speed,performance.radius);
+
 
 
     
