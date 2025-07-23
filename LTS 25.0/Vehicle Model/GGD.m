@@ -218,25 +218,16 @@ performance = struct();
 Rnum = 20;
 performance.speed = zeros(1,Rnum);
 performance.radius = zeros(1,Rnum);
-corner = casadi.Opti();
-for radius = 1:Rnum
-    % define variables
-    speed = corner.variable(); corner.subject_to(0<=speed<=v_max);
-    % require lateral acceleration (G)
-    areq = speed^2/radius/9.81;
-    % available lateral acceleration (G)
-    ay = interp1(ymax(1,:),ymax(2,:),speed);
-    % constraints
-    corner.subject_to(ay>=areq);
-    % objective
-    corner.minimize(-speed);
-    % initial guess
-    corner.set_initial(speed=1);
-    % solve cornering speed
-    vy = corner.solver('ipopt');
-    performance.speed(radius) = vy.value(speed);
-    performance.radius(radius) = radius;
+for v = 1:length(ymax)
+    speed = ymax(1,v);
+    ay = ymax(2,v);
+    radius = speed^2/(ay*9.81);
+    performance.speed(v) = speed;
+    performance.radius(v) = radius;
 end
+% interpolate radius at each speed
+PerfEnv = spline(performance.speed,performance.radius);
+
 
 
     
