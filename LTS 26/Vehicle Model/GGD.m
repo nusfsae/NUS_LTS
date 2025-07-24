@@ -25,8 +25,11 @@ import casadi.*
 tic
 % % Create empty performance envelope GG
 GG = struct();
-Vnum = floor(v_max-10)-10;        % number of speed variations
-Gnum = 50;                        % number of longG variations
+% number of speed values for GG diagrams
+Vnum = floor(v_max-10)-10;
+% number of ax/ay combo per speed
+Gnum = 50;                        
+% GG diagram starting speed
 Vstart = 10;
 GG.speed = struct();
 for i = 1:Vnum
@@ -45,8 +48,8 @@ end
 
 % % Steady State Speed Setting
 for i = 1:2:floor(v_max)-Vstart
+    % steady state vehicle speed
     V = i+9;
-    GG.speed(i).speed = V;
     % define variable constraints
     % relax slip angle at high speed
     if V >= 17 && V <= 23
