@@ -1,14 +1,6 @@
 % % Vehicle Model
 
 % % Resolve lataral and longitudinal limit
-prob = casadi.Opti();
-
-% % define unknowns
-delta = prob.variable(); prob.subject_to(-del_max<=delta<=del_max);          % steering angle (rad)
-beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
-dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);            % yaw rate (rad/s)
-Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
-Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
 
 % % Equations of Motions
 % Distance from CG to front axle and CG to rear
@@ -22,15 +14,6 @@ Saf = -delta + atan((dy + lf*dpsi)/dx);
 Sar = atan((dy - lr*dpsi)/dx);
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
-% Powertrian limit
-v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting % v_weak = 86.5/3.6; % 360V setting
-if V < v_weak  %24.03 % 360V setting
-    tractive = 0.8*Ipeak*220*FDR/R;
-else    
-    Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak;
-    tractive = 0.8*Ipeak*Iweak*FDR/R;
-end
-atractive = tractive/(mass);
 
 % % Tire model
 % tire parameters
@@ -51,7 +34,9 @@ Fyr = Fypr * cos(D*atan(E*Sxr));
 Fy = Fyf*cos(delta) + Fxf*sin(delta) + Fyr;
 Fx = Fxf*cos(delta) - Fyf*sin(delta) + Fxr;
 Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
+% Power Output
+PowerOut = Fx*V/1000; % [kW]
 % accelerations in path tangential coordinates
-ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta)));
+ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
 ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 

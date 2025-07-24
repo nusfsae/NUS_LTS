@@ -8,7 +8,7 @@ for v0 = v2:0.1:v1
     % current lateral acceleration
     ay =v0^2/radius;
     % available longitudinal acceleraton
-    ax =interp2(GG.speed.speed,GG.speed.ay,GG.speed.ax,v0,ay,'spline');
+    ax =findax(v0,ay);
     % minimum speed after decceleration
     v =sqrt(v0^2+2*ax*distance);
     % break if minimum speed less than target speed

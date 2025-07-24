@@ -9,7 +9,7 @@ for i = 1:length(C2)-1
     v0 = sim.speed(i);
     ay = v0^2/radius;
     % available longitudinal acceleraton
-    ax = interp2(GG.speed.speed,GG.speed.ay,GG.speed.ax,v0,ay,'spline');
+    ax = findax(v0,ay);
     v = sqrt(v0^2+2*ax*distance);
     if v<=sim.speed(i+1)
         sim.speed(i+1)=v;

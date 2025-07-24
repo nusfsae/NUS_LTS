@@ -1,3 +1,6 @@
+
+import casadi.*
+
 % % Vehicle Model
 mass = 262;  % vehicle mass (kg)
 den = 1.196;  % air density
@@ -16,21 +19,32 @@ cg_h = 0.256;
 ab = 0.5310665;
 mass_front = 0.5095; % mass distribution to front
 Inertia = 106;
+v_min = 10; % [m/s] minimum speed for GG calculation
 v_max = (max_rpm/FDR)*pi*2*R/60; % maximum speed
+PMaxLimit = 80; % [kW] Power Limit
 
+% % Bounds for Path Constraints
+maxDelta = deg2rad(25); % maximum steering angle (rad)
+maxSa = deg2rad(10);
+maxBeta = deg2rad(10);
+maxSxf = 0.1;
+maxSxr = 0.1;
+maxDpsi = deg2rad(120); % deg/s to rad/s
 
-import casadi.*
+% % IPOPT Settings
+p_opts = struct;
+s_opts = struct;
+p_opts.print_time = 0;
+s_opts.print_level = 0;
 
+% % Mesh Discretization
+Vnum = 10;        % number of speed variations
+Gnum = 10;        % number of longG variations
+velocityRange = linspace(v_min,v_max - 5, Vnum); % Discrete Velocity Points
 
 tic
 % % Create empty performance envelope GG
 GG = struct();
-% number of speed values for GG diagrams
-Vnum = floor(v_max-10)-10;
-% number of ax/ay combo per speed
-Gnum = 50;                        
-% GG diagram starting speed
-Vstart = 10;
 GG.speed = struct();
 for i = 1:Vnum
     GG.speed(i).ax = zeros(1,Gnum);
@@ -47,168 +61,90 @@ end
 
 
 % % Steady State Speed Setting
-for i = 1:2:floor(v_max)-Vstart
-    % steady state vehicle speed
-    V = i+9;
-    % define variable constraints
-    % relax slip angle at high speed
-    if V >= 17 && V <= 23
-        maxSa = deg2rad(8);
-    elseif V > 23 && V <= 25 || V <= 14
-        maxSa = deg2rad(12);
-    elseif V > 25 && V <= 30
-        maxSa = deg2rad(12);
-    elseif V > 30 && V <= 33
-        maxSa = deg2rad(20);
-    elseif V>33
-        maxSa = deg2rad(22);
-    else
-        maxSa = deg2rad(5);
-    end
-    maxBeta = deg2rad(20);
-    % relax yaw rate at high speed
-    % if V >= 20 && V <= 30
-    %     maxDpsi = deg2rad(120);
-    if V>30
-        maxDpsi = deg2rad(140);
-    else
-        maxDpsi = deg2rad(90);
-    end
-    if V == 20
-        maxDpsi = deg2rad(120);
-    end
-    if 21<=V<= 22
-        maxDpsi = deg2rad(100);
-    end
-    maxSxf = 0.1;
-    maxSxr = 0.1;
-
-    % % Braking G Solver
-    prob = [];
+for i = 1:numel(velocityRange)
+    V = velocityRange(i);
+    GG.speed(i).speed = V;
+    % Maximum Forward Acceleration
+    prob = casadi.Opti();    
+    % Initialise Decision Variables
+    delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);       % steering angle (rad)
+    beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);           % body slip (rad)
+    Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);               % front slip ratio
+    Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);               % rear slip ratio
+    dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);           % Yaw rate (rad/s)
+    % Call Vehicle Model
     vehicle;
-    % define objective
-    prob.minimize(ax);
     % define initial guess
     prob.set_initial(delta,0);
     prob.set_initial(beta,0);
-    prob.set_initial(dpsi,0);
-    prob.set_initial(Sxf,-0.05);
-    prob.set_initial(Sxr,-0.05);
-    % optimization results
-    p_opts = struct;
-    s_opts = struct;
-    s_opts.print_level = 5;
-    prob.solver('ipopt', p_opts, s_opts);
-    x = prob.solve();
-    GG.speed(i).ax(Gnum) = x.value(ax)-Drag/mass;
-    GG.speed(i).ay(Gnum) = x.value(ay);
-    GG.speed(i).delta(Gnum) = x.value(delta);
-    GG.speed(i).beta(Gnum) = x.value(beta);
-    GG.speed(i).dpsi(Gnum) = x.value(dpsi);
-    GG.speed(i).Sxf(Gnum) = x.value(Sxf);
-    GG.speed(i).Sxr(Gnum) = x.value(Sxr);
-    GG.speed(i).Sar(Gnum) = x.value(Sar);
-    GG.speed(i).Saf(Gnum) = x.value(Saf);
-    GG.speed(i).V(Gnum) = V;
-
-
-    % Acceleration G Solver
-    prob = [];
-    vehicle;
-    % define objective
-    prob.minimize(-ax);
-    % define initial guess
-    prob.set_initial(delta,0);
-    prob.set_initial(beta,0);
-    prob.set_initial(dpsi,0);
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
-    % define constraints
-    prob.subject_to(ax<=atractive);
-    % optimization results
-    prob.solver('ipopt');
-    x = prob.solve();
-    GG.speed(i).ax(1) = x.value(ax)-Drag/mass;
-    GG.speed(i).ay(1) = x.value(ay);
-    GG.speed(i).delta(1) = x.value(delta);
-    GG.speed(i).beta(1) = x.value(beta);
-    GG.speed(i).dpsi(1) = x.value(dpsi);
-    GG.speed(i).Sxf(1) = x.value(Sxf);
-    GG.speed(i).Sxr(1) = x.value(Sxr);
-    GG.speed(i).Sar(1) = x.value(Sar);
-    GG.speed(i).Saf(1) = x.value(Saf);
-    GG.speed(i).V(1) = V;
-
-
-    % Spread equally longitudinal G values across performance envelope
-    GG.speed(i).ax = linspace(GG.speed(i).ax(1),GG.speed(i).ax(Gnum),length(GG.speed(i).ax));
-
-
-    % Power Margin Lateral G Solver
-    prob = [];
-    vehicle;
-    % define objective
-    prob.minimize(-ay);
-    % define initial guess
-    prob.set_initial(delta,deg2rad(0));
-    prob.set_initial(beta,deg2rad(0));
     prob.set_initial(dpsi,0);
-    prob.set_initial(Sxf,0);
-    prob.set_initial(Sxr,0);
     % define constraints
-    prob.subject_to(ax == GG.speed(i).ax(1));
+    prob.subject_to(PowerOut<=PMaxLimit);
     prob.subject_to(Mz == 0);
-    prob.subject_to(ay-V*dpsi == 0);
-    prob.subject_to(-maxSa<=Saf<=maxSa);
-    prob.subject_to(-maxSa<=Sar<=maxSa);
-    % optimization results
-    prob.solver('ipopt');
-    x = prob.solve();
-    GG.speed(i).ax(2) = x.value(ax);
-    GG.speed(i).ay(2) = x.value(ay);
-    GG.speed(i).delta(2) = x.value(delta);
-    GG.speed(i).beta(2) = x.value(beta);
-    GG.speed(i).dpsi(2) = x.value(dpsi);
-    GG.speed(i).Sxf(2) = x.value(Sxf);
-    GG.speed(i).Sxr(2) = x.value(Sxr);
-    GG.speed(i).Sar(2) = x.value(Sar);
-    GG.speed(i).Saf(2) = x.value(Saf);
-    GG.speed(i).V(2) = V;
+    prob.subject_to(ay - V*dpsi == 0);
+    prob.solver('ipopt', p_opts, s_opts);
 
+    % % acceleration G solver
+    prob.minimize(-ax); 
+    x = prob.solve(); 
+    maxAx = x.value(ax);
+
+    % % braking G solver
+    prob.minimize(ax); 
+    x = prob.solve(); 
+    minAx = x.value(ax);
+
+    % % equal spread ax to -ax
+    GG.speed(i).ax = [maxAx, linspace(maxAx, minAx, Gnum), minAx];
+    GG.speed(i).ay = zeros(1, numel(GG.speed(i).ax));
 
     % Lateral G Solver
-    for lat = 3:Gnum-1
-        prob = [];
+    for j = 2:numel(GG.speed(i).ax)-1
+        ax_target = GG.speed(i).ax(j);
+        prob = casadi.Opti();
+        % Decision Variables
+        delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);        % steering angle (rad)
+        beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
+        Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
+        Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
+        dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);            % Yaw rate (rad/s)
+        % Call Vehicle Model
         vehicle;
         % define objective
-        prob.minimize(-ay);
-        % define initial guess
-        prob.set_initial(delta,deg2rad(0));
-        prob.set_initial(beta,deg2rad(0));
-        prob.set_initial(dpsi,0);
+        prob.minimize(-ay); % Maximum GG Envelope Radius
+        prob.set_initial(delta,0);
+        prob.set_initial(beta,0);
         prob.set_initial(Sxf,0);
         prob.set_initial(Sxr,0);
+        prob.set_initial(dpsi,0);
         % define constraints
-        prob.subject_to(ax == GG.speed(i).ax(lat));
         prob.subject_to(Mz == 0);
-        prob.subject_to(ay-V*dpsi == 0);
+        prob.subject_to(ax == ax_target);
+        prob.subject_to(ay - V*dpsi == 0);
         prob.subject_to(-maxSa<=Saf<=maxSa);
         prob.subject_to(-maxSa<=Sar<=maxSa);
         % optimization results
-        prob.solver('ipopt');
-        y = prob.solve();
-        GG.speed(i).ax(lat) = y.value(ax);
-        GG.speed(i).ay(lat) = y.value(ay);
-        GG.speed(i).delta(lat) = y.value(delta);
-        GG.speed(i).beta(lat) = y.value(beta);
-        GG.speed(i).dpsi(lat) = y.value(dpsi);
-        GG.speed(i).Sxf(lat) = y.value(Sxf);
-        GG.speed(i).Sxr(lat) = y.value(Sxr);
-        GG.speed(i).Sar(lat) = y.value(Sar);
-        GG.speed(i).Saf(lat) = y.value(Saf);
-        GG.speed(i).V(lat) = V;
+        prob.solver('ipopt', p_opts, s_opts);
+        % security catch in case failure
+        try
+            x = prob.solve();
+            GG.speed(i).ax(j) = x.value(ax);
+            GG.speed(i).ay(j) = x.value(ay);
+            GG.speed(i).delta(j) = x.value(delta);
+            GG.speed(i).beta(j) = x.value(beta);
+            GG.speed(i).dpsi(j) = x.value(dpsi);
+            GG.speed(i).Sxf(j) = x.value(Sxf);
+            GG.speed(i).Sxr(j) = x.value(Sxr);
+            GG.speed(i).Sar(j) = x.value(Sar);
+            GG.speed(i).Saf(j) = x.value(Saf);
+        catch
+            GG.speed(i).ax(j) = NaN;
+            GG.speed(i).ay(j) = NaN;
+            fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
+        end
     end
-
     % store maximum ay at each speed
     GG.speed(i).aymax = max(GG.speed(i).ay);
     % 3D plot GG diagram
@@ -218,40 +154,39 @@ for i = 1:2:floor(v_max)-Vstart
 end
 
 
-%%
 
 % % Extract maximum performance at each speed
-ymax = zeros(2,length(GG.speed));
-for i = 1:length(GG.speed)
-    ymax(1,i) = GG.speed(i).V(1);
-    ymax(2,i) = GG.speed(i).aymax;
-end
-
-
-% % Create cornering G performance envelope
-performance = struct();
-Rnum = 20;
-performance.speed = zeros(1,Rnum);
-performance.radius = zeros(1,Rnum);
-for v = 1:length(ymax)
-    speed = ymax(1,v);
-    ay = ymax(2,v);
-    radius = speed^2/(ay*9.81);
-    performance.speed(v) = speed;
-    performance.radius(v) = radius;
-end
-% interpolate radius at each speed
-PerfEnv =spline(performance.speed,performance.radius);
-% interpolate performance envelope
-findax =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).ax,'natural','boundary');
-finday =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,'natural','boundary');
-findv =scatteredInterpolant(GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).V,'natural','boundary');    
-    
+% ymax = zeros(2,length(GG.speed));
+% for i = 1:length(GG.speed)
+%     ymax(1,i) = GG.speed(i).V(1);
+%     ymax(2,i) = GG.speed(i).aymax;
+% end
+% 
+% 
+% % % Create cornering G performance envelope
+% performance = struct();
+% Rnum = 20;
+% performance.speed = zeros(1,Rnum);
+% performance.radius = zeros(1,Rnum);
+% for v = 1:length(ymax)
+%     speed = ymax(1,v);
+%     ay = ymax(2,v);
+%     radius = speed^2/(ay*9.81);
+%     performance.speed(v) = speed;
+%     performance.radius(v) = radius;
+% end
+% % interpolate radius at each speed
+% PerfEnv =spline(performance.speed,performance.radius);
+% % interpolate performance envelope
+% findax =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).ax,'natural','boundary');
+% finday =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,'natural','boundary');
+% findv =scatteredInterpolant(GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).V,'natural','boundary');    
+% 
 
 
 % 
-% figure
-% plot(GG.speed(i).ay,GG.speed(i).ax)
+figure
+plot(GG.speed(i).ay,GG.speed(i).ax)
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))
