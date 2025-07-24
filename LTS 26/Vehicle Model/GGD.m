@@ -11,7 +11,6 @@ CLc = 3.782684;
 CDc = 1.410518;
 CLs = 4.116061;
 CDs = 1.54709;  
-del_max = deg2rad(25); % 0.565;  % maximum steering angle (rad)
 max_rpm = 5500;
 FDR = 3.36;
 R = 0.2032;
@@ -23,13 +22,15 @@ mass_front = 0.5095; % mass distribution to front
 Inertia = 106;
 v_min = 10; % [m/s] minimum speed for GG calculation
 v_max = (max_rpm/FDR)*pi*2*R/60; % maximum speed
-
+PMaxLimit = 80; % [kW] Power Limit
 
 % Bounds for Path Constraints
+maxDelta = deg2rad(25); % maximum steering angle (rad)
 maxSa = deg2rad(10);
 maxBeta = deg2rad(10);
-maxSxf = 0.2;
-maxSxr = 0.2;
+maxSxf = 0.1;
+maxSxr = 0.1;
+maxDpsi = deg2rad(120); % deg/s to rad/s
 
 % IPOPT Settings
 p_opts = struct;
@@ -40,8 +41,7 @@ s_opts.print_level = 0;
 % Mesh Discretization
 Vnum = 10;        % number of speed variations
 Gnum = 10;        % number of longG variations
-velocityRange = linspace(v_min,v_max, Vnum); % Discrete Velocity Points
-alpha_range = linspace(-pi/2, pi/2, Gnum); % Discrete GG orientation Points
+velocityRange = linspace(v_min,v_max - 5, Vnum); % Discrete Velocity Points
 
 tic
 % % Create empty performance envelope GG
@@ -57,7 +57,6 @@ for i = 1:Vnum
     GG.speed(i).Sxr = zeros(1,Gnum);
     GG.speed(i).Saf = zeros(1,Gnum);
     GG.speed(i).Sar = zeros(1,Gnum);
-    GG.speed(i).p   = zeros(1,Gnum);
 end
 
 
@@ -66,106 +65,80 @@ for i = 1:numel(velocityRange)
     V = velocityRange(i);
     GG.speed(i).speed = V;
 
-    % Solve the first point externally
-    % use this as initial guess for the subsequent point
-
-    alpha = alpha_range(1);
+    % Maximum Forward Acceleration
     prob = casadi.Opti();
     
-    % % define unknowns
-    delta = prob.variable(); prob.subject_to(0<=delta<=del_max);          % steering angle (rad)
-    beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
-    Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
-    Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
-    p   = prob.variable(); prob.subject_to(0<=p<=3);   % GG Envelope Radius
+    % Initialise Decision Variables
+    delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);          % steering angle (rad)
+    beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);     % body slip (rad)
+    Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);         % front slip ratio
+    Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);         % rear slip ratio
+    dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);   % Yaw rate (rad/s)
 
-    % Set Targets
-    ax_target = p * sin(alpha - beta) * 9.81;
-    ay_target = p * cos(alpha - beta) * 9.81;
-    dpsi = ay_target/V;
-
+    % Call Vehicle Model
     vehicle;
 
-    % define objective
-    prob.minimize(-p^2); % Maximum GG Envelope Radius
-
     % define initial guess
-    prob.set_initial(p,0.1);
     prob.set_initial(delta,0);
     prob.set_initial(beta,0);
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
+    prob.set_initial(dpsi,0);
 
     % define constraints
-    prob.subject_to(PowerOut<=80);
+    prob.subject_to(PowerOut<=PMaxLimit); % Power Limits
     prob.subject_to(Mz == 0);
-    prob.subject_to(-maxSa<=Saf<=maxSa);
-    prob.subject_to(-maxSa<=Sar<=maxSa);
-    prob.subject_to(ax == ax_target);
-    prob.subject_to(ay == ay_target);
+    prob.subject_to(ay - V*dpsi == 0);
 
-    % optimization results
     prob.solver('ipopt', p_opts, s_opts);
-    x = prob.solve();
-    GG.speed(i).p(1)  = x.value(p);
-    GG.speed(i).ax(1) = x.value(ax);
-    GG.speed(i).ay(1) = x.value(ay);
-    GG.speed(i).delta(1) = x.value(delta);
-    GG.speed(i).beta(1) = x.value(beta);
-    GG.speed(i).dpsi(1) = x.value(dpsi);
-    GG.speed(i).Sxf(1) = x.value(Sxf);
-    GG.speed(i).Sxr(1) = x.value(Sxr);
-    GG.speed(i).Sar(1) = x.value(Sar);
-    GG.speed(i).Saf(1) = x.value(Saf);
 
-    for j = 2:numel(alpha_range)
-        alpha = alpha_range(j);
+    % Maximum Acceleration
+    prob.minimize(-ax); % Objective
+    x = prob.solve(); % optimization results
+    maxAx = x.value(ax);
 
-        % Solver for Envelope in One Move
-        % Create optimisation problem
+    % Maximum Deceleration
+    prob.minimize(ax); % Objective
+    x = prob.solve(); % Optimisation Results
+    minAx = x.value(ax);
+
+    GG.speed(i).ax = [maxAx, linspace(maxAx, minAx, Gnum), minAx]; % Pad the array with zeros
+    GG.speed(i).ay = zeros(1, numel(GG.speed(i).ax));
+
+    for j = 2:numel(GG.speed(i).ax)-1
+        
+        ax_target = GG.speed(i).ax(j);
         prob = casadi.Opti();
         
-        % % define unknowns
-        delta = prob.variable(); prob.subject_to(-del_max<=delta<=del_max);          % steering angle (rad)
+        % Decision Variables
+        delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);          % steering angle (rad)
         beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
         Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
         Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
-        p   = prob.variable(); prob.subject_to(0<=p<=3);   % GG Envelope Radius
-    
-        % Set Targets
-        ax_target = p * sin(alpha - beta) * 9.81;
-        ay_target = p * cos(alpha - beta) * 9.81;
-        dpsi = ay_target/V;
-    
+        dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);             % Yaw rate (rad/s)
+
+        % Call Vehicle Model   
         vehicle;
     
         % define objective
-        prob.minimize(-p^2); % Maximum GG Envelope Radius
-    
-        % define initial guess
-%         prob.set_initial(p,GG.speed(i).p(j-1));
-%         prob.set_initial(delta,GG.speed(i).delta(j-1));
-%         prob.set_initial(beta,GG.speed(i).beta(j-1));
-%         prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
-%         prob.set_initial(Sxr,GG.speed(i).Sxr(j-1));
+        prob.minimize(-ay); % Maximum GG Envelope Radius
 
-        prob.set_initial(p,0);
         prob.set_initial(delta,0);
         prob.set_initial(beta,0);
         prob.set_initial(Sxf,0);
         prob.set_initial(Sxr,0);
+        prob.set_initial(dpsi,0);
     
         % define constraints
-        prob.subject_to(PowerOut<=80);
         prob.subject_to(Mz == 0);
+        prob.subject_to(ax == ax_target);
+        prob.subject_to(ay - V*dpsi == 0);
         prob.subject_to(-maxSa<=Saf<=maxSa);
         prob.subject_to(-maxSa<=Sar<=maxSa);
-        prob.subject_to(ax == ax_target);
-        prob.subject_to(ay == ay_target);
 
         % optimization results
         prob.solver('ipopt', p_opts, s_opts);
-    
+
         try
         
             x = prob.solve();
@@ -180,13 +153,13 @@ for i = 1:numel(velocityRange)
             GG.speed(i).Saf(j) = x.value(Saf);
 
         catch
+         
             GG.speed(i).ax(j) = NaN;
             GG.speed(i).ay(j) = NaN;
-            fprintf("Combined Slip Failed at V - %0.2f [m/s] & Alpha - %0.2f [deg] \n", V, rad2deg(alpha))
+            fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
         
         end
-
-
+        
     end
 
     % store maximum ay at each speed
