@@ -21,3 +21,5 @@ sim.throttle = zeros(num,1);
 % run simulation
 GGD;
 cornerProfile;
+accelProfile;
+brakeProfile;

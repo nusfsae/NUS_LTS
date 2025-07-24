@@ -39,6 +39,7 @@ for i = 1:Vnum
     GG.speed(i).Sxr = zeros(1,Gnum);
     GG.speed(i).Saf = zeros(1,Gnum);
     GG.speed(i).Sar = zeros(1,Gnum);
+    GG.speed(i).V = zeros(1,Gnum);
 end
 
 
@@ -105,6 +106,7 @@ for i = 1:2:floor(v_max)-Vstart
     GG.speed(i).Sxr(Gnum) = x.value(Sxr);
     GG.speed(i).Sar(Gnum) = x.value(Sar);
     GG.speed(i).Saf(Gnum) = x.value(Saf);
+    GG.speed(i).V(Gnum) = V;
 
 
     % Acceleration G Solver
@@ -132,6 +134,7 @@ for i = 1:2:floor(v_max)-Vstart
     GG.speed(i).Sxr(1) = x.value(Sxr);
     GG.speed(i).Sar(1) = x.value(Sar);
     GG.speed(i).Saf(1) = x.value(Saf);
+    GG.speed(i).V(1) = V;
 
 
     % Spread equally longitudinal G values across performance envelope
@@ -167,6 +170,7 @@ for i = 1:2:floor(v_max)-Vstart
     GG.speed(i).Sxr(2) = x.value(Sxr);
     GG.speed(i).Sar(2) = x.value(Sar);
     GG.speed(i).Saf(2) = x.value(Saf);
+    GG.speed(i).V(2) = V;
 
 
     % Lateral G Solver
@@ -199,11 +203,11 @@ for i = 1:2:floor(v_max)-Vstart
         GG.speed(i).Sxr(lat) = y.value(Sxr);
         GG.speed(i).Sar(lat) = y.value(Sar);
         GG.speed(i).Saf(lat) = y.value(Saf);
+        GG.speed(i).V(lat) = V;
     end
 
     % store maximum ay at each speed
     GG.speed(i).aymax = max(GG.speed(i).ay);
-
     % 3D plot GG diagram
     z = i * ones(size(GG.speed(i).ax));  
     plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
@@ -211,10 +215,12 @@ for i = 1:2:floor(v_max)-Vstart
 end
 
 
+%%
+
 % % Extract maximum performance at each speed
 ymax = zeros(2,length(GG.speed));
 for i = 1:length(GG.speed)
-    ymax(1,i) = GG.speed(i).speed;
+    ymax(1,i) = GG.speed(i).V(1);
     ymax(2,i) = GG.speed(i).aymax;
 end
 
@@ -227,15 +233,16 @@ performance.radius = zeros(1,Rnum);
 for v = 1:length(ymax)
     speed = ymax(1,v);
     ay = ymax(2,v);
-    radius = speed^2/(ay);
+    radius = speed^2/(ay*9.81);
     performance.speed(v) = speed;
     performance.radius(v) = radius;
 end
 % interpolate radius at each speed
-PerfEnv = spline(performance.speed,performance.radius);
-
-
-
+PerfEnv =spline(performance.speed,performance.radius);
+% interpolate performance envelope
+findax =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).ax,'natural','boundary');
+finday =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,'natural','boundary');
+findv =scatteredInterpolant(GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).V,'natural','boundary');    
     
 
 

@@ -6,8 +6,9 @@ for i = 1:length(C2)
     % if radius larger than 30m, assume straight
     if abs(radius) > 30      
         sim.speed(i,1) = v_max;
-        sim.latG(i,1) = 0;        
-    else %cornering scenario
+        sim.latG(i,1) = 0;   
+    %cornering scenario
+    else 
         vy = ppval(PerfEnv,radius);
         sim.speed(i,1) = vy;  
     end
