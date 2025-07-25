@@ -162,45 +162,68 @@ for i = 1:numel(velocityRange)
     % store maximum ay at each speed
     GG.speed(i).aymax = max(GG.speed(i).ay);
     % 3D plot GG diagram
-    z = i * ones(size(GG.speed(i).ax));  
+    z = GG.speed(i).speed* ones(size(GG.speed(i).ax));  
     plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
     hold on
 end
 
-
+%%
 
 % % Extract maximum performance at each speed
-% ymax = zeros(2,length(GG.speed));
-% for i = 1:length(GG.speed)
-%     ymax(1,i) = GG.speed(i).V(1);
-%     ymax(2,i) = GG.speed(i).aymax;
-% end
-% 
-% 
-% % % Create cornering G performance envelope
-% performance = struct();
-% Rnum = 20;
-% performance.speed = zeros(1,Rnum);
-% performance.radius = zeros(1,Rnum);
-% for v = 1:length(ymax)
-%     speed = ymax(1,v);
-%     ay = ymax(2,v);
-%     radius = speed^2/(ay*9.81);
-%     performance.speed(v) = speed;
-%     performance.radius(v) = radius;
-% end
-% % interpolate radius at each speed
-% PerfEnv =spline(performance.speed,performance.radius);
-% % interpolate performance envelope
-% findax =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).ax,'natural','boundary');
-% finday =scatteredInterpolant(GG.speed(1:Vnum).V,GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,'natural','boundary');
-% findv =scatteredInterpolant(GG.speed(1:Vnum).ax,GG.speed(1:Vnum).ay,GG.speed(1:Vnum).V,'natural','boundary');    
-% 
+ymax = zeros(2,length(GG.speed));
+for i = 1:length(GG.speed)
+    ymax(1,i) = GG.speed(i).speed;
+    ymax(2,i) = GG.speed(i).aymax;
+end
 
 
+% % Create cornering G performance envelope
+performance = struct();
+Rnum = length(ymax);
+performance.speed = zeros(1,Rnum);
+performance.radius = zeros(1,Rnum);
+for v = 1:length(ymax)
+    speed = ymax(1,v);
+    ay = ymax(2,v);
+    radius = speed^2/ay;
+    performance.speed(v) = speed;
+    performance.radius(v) = radius;
+end
+% 3xN array for [speed,ay,ax]
+performance.v = zeros(1,Vnum*(Gnum+2));
+performance.ax = zeros(1,Vnum*(Gnum+2));
+performance.ay = zeros(1,Vnum*(Gnum+2));
+for i = 1:Vnum
+    for j = 1:Gnum+2
+        % speed value
+        performance.v((i-1)*(Gnum+2)+j) = GG.speed(i).speed;
+        % ay value
+        performance.ay((i-1)*(Gnum+2)+j) = GG.speed(i).ay(j);
+        % ax value
+        performance.ax((i-1)*(Gnum+2)+j) = GG.speed(i).ax(j);
+    end
+end
+% interpolate radius at each speed
+PerfEnv =spline(performance.speed,performance.radius);
+% interpolate performance envelope
+findax =scatteredInterpolant(performance.v(:),performance.ay(:),performance.ax(:),'natural','boundary');
+finday =scatteredInterpolant(performance.v(:),performance.ax(:),performance.ay(:),'natural','boundary');
+findv =scatteredInterpolant(performance.ax(:),performance.ay(:),performance.v(:),'natural','boundary');    
+
+[xq, yq] = meshgrid(linspace(-20,20), linspace(0,20));
+zq = findv(xq, yq);  % interpolated values on the grid
+
+% 4. Plot the surface
+figure;
+surf(xq, yq, zq);
+% shading interp;  % smooth surface
+xlabel('ax'); ylabel('ay'); zlabel('V');
+title('Interpolated Surface using scatteredInterpolant');
+colorbar;
+
 % 
-figure
-plot(GG.speed(i).ay,GG.speed(i).ax)
+% figure
+% plot(GG.speed(i).ay,GG.speed(i).ax)
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))
