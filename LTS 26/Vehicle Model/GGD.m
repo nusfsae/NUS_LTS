@@ -39,25 +39,25 @@ s_opts.print_level = 0;
 
 % % Mesh Discretization
 Vnum = 10;        % number of speed variations
-Gnum = 10;        % number of longG variations
+Gnum = 10;        % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max - 5, Vnum); % Discrete Velocity Points
 
 tic
 % % Create empty performance envelope GG
 GG = struct();
 GG.speed = struct();
-for i = 1:Vnum
-    GG.speed(i).ax = zeros(1,Gnum);
-    GG.speed(i).ay = zeros(1,Gnum);
-    GG.speed(i).delta = zeros(1,Gnum);
-    GG.speed(i).beta = zeros(1,Gnum);
-    GG.speed(i).dpsi = zeros(1,Gnum);
-    GG.speed(i).Sxf = zeros(1,Gnum);
-    GG.speed(i).Sxr = zeros(1,Gnum);
-    GG.speed(i).Saf = zeros(1,Gnum);
-    GG.speed(i).Sar = zeros(1,Gnum);
-    GG.speed(i).V = zeros(1,Gnum);
-end
+% for i = 1:Vnum
+%     GG.speed(i).ax = zeros(1,Gnum);
+%     GG.speed(i).ay = zeros(1,Gnum);
+%     GG.speed(i).delta = zeros(1,Gnum);
+%     GG.speed(i).beta = zeros(1,Gnum);
+%     GG.speed(i).dpsi = zeros(1,Gnum);
+%     GG.speed(i).Sxf = zeros(1,Gnum);
+%     GG.speed(i).Sxr = zeros(1,Gnum);
+%     GG.speed(i).Saf = zeros(1,Gnum);
+%     GG.speed(i).Sar = zeros(1,Gnum);
+%     GG.speed(i).V = zeros(1,Gnum);
+% end
 
 
 % % Steady State Speed Setting
@@ -90,11 +90,25 @@ for i = 1:numel(velocityRange)
     prob.minimize(-ax); 
     x = prob.solve(); 
     maxAx = x.value(ax);
+    GG.speed(i).delta(1) = x.value(delta);
+    GG.speed(i).beta(1) = x.value(beta);
+    GG.speed(i).dpsi(1) = x.value(dpsi);
+    GG.speed(i).Sxf(1) = x.value(Sxf);
+    GG.speed(i).Sxr(1) = x.value(Sxr);
+    GG.speed(i).Sar(1) = x.value(Sar);
+    GG.speed(i).Saf(1) = x.value(Saf);
 
     % % braking G solver
-    prob.minimize(ax); 
-    x = prob.solve(); 
+    prob.minimize(ax);
+    x = prob.solve();
     minAx = x.value(ax);
+    GG.speed(i).delta(numel(velocityRange)+2) = x.value(delta);
+    GG.speed(i).beta(numel(velocityRange)+2) = x.value(beta);
+    GG.speed(i).dpsi(numel(velocityRange)+2) = x.value(dpsi);
+    GG.speed(i).Sxf(numel(velocityRange)+2) = x.value(Sxf);
+    GG.speed(i).Sxr(numel(velocityRange)+2) = x.value(Sxr);
+    GG.speed(i).Sar(numel(velocityRange)+2) = x.value(Sar);
+    GG.speed(i).Saf(numel(velocityRange)+2) = x.value(Saf);
 
     % % equal spread ax to -ax
     GG.speed(i).ax = [maxAx, linspace(maxAx, minAx, Gnum), minAx];
