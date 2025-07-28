@@ -168,7 +168,6 @@ for i = 1:numel(velocityRange)
 end
 
 %%
-
 % % Extract maximum performance at each speed
 ymax = zeros(2,length(GG.speed));
 for i = 1:length(GG.speed)
@@ -189,6 +188,8 @@ for v = 1:length(ymax)
     performance.speed(v) = speed;
     performance.radius(v) = radius;
 end
+% interpolate radius at each speed
+PerfEnv =spline(performance.speed,performance.radius);
 % 3xN array for [speed,ay,ax]
 performance.v = zeros(1,Vnum*(Gnum+2));
 performance.ax = zeros(1,Vnum*(Gnum+2));
@@ -203,23 +204,43 @@ for i = 1:Vnum
         performance.ax((i-1)*(Gnum+2)+j) = GG.speed(i).ax(j);
     end
 end
-% interpolate radius at each speed
-PerfEnv =spline(performance.speed,performance.radius);
-% interpolate performance envelope
-findax =scatteredInterpolant(performance.v(:),performance.ay(:),performance.ax(:),'natural','boundary');
-finday =scatteredInterpolant(performance.v(:),performance.ax(:),performance.ay(:),'natural','boundary');
-findv =scatteredInterpolant(performance.ax(:),performance.ay(:),performance.v(:),'natural','boundary');    
+% split performance envelope in half
+accel = struct(); brake = struct();
+idxpos = performance.ax>=0;
+idxneg = performance.ax<0;
+accel.ax = performance.ax(idxpos);accel.ay = performance.ay(idxpos);accel.v = performance.v(idxpos);
+brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = performance.v(idxneg);
 
-[xq, yq] = meshgrid(linspace(-20,20), linspace(0,20));
-zq = findv(xq, yq);  % interpolated values on the grid
+%%
 
-% 4. Plot the surface
+figure
+plot3(accel.ay(:),accel.ax(:),accel.v(:));
+testint =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','boundary');
+[xq, yq] = meshgrid(linspace(0,20), linspace(0,20));
+zq = testint(xq, yq);  % interpolated values on the grid
 figure;
 surf(xq, yq, zq);
 % shading interp;  % smooth surface
 xlabel('ax'); ylabel('ay'); zlabel('V');
 title('Interpolated Surface using scatteredInterpolant');
 colorbar;
+
+% interpolate performance envelope
+% findax =scatteredInterpolant(performance.v(:),performance.ay(:),performance.ax(:),'natural','boundary');
+% finday =scatteredInterpolant(performance.v(:),performance.ax(:),performance.ay(:),'natural','boundary');
+% findv =scatteredInterpolant(performance.ax(:),performance.ay(:),performance.v(:),'natural','boundary');    
+
+% 
+% [xq, yq] = meshgrid(linspace(-20,20), linspace(0,20));
+% zq = findv(xq, yq);  % interpolated values on the grid
+% 
+% % 4. Plot the surface
+% figure;
+% surf(xq, yq, zq);
+% % shading interp;  % smooth surface
+% xlabel('ax'); ylabel('ay'); zlabel('V');
+% title('Interpolated Surface using scatteredInterpolant');
+% colorbar;
 
 % 
 % figure
