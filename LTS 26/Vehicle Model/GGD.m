@@ -199,36 +199,42 @@ idxneg = performance.ax<0;
 accel.ax = performance.ax(idxpos);accel.ay = performance.ay(idxpos);accel.v = performance.v(idxpos);
 brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = performance.v(idxneg);
 
+% 2d interpolate ax/ay at each speed
+for i = 1:numel(velocityRange)
+    V = velocityRange(i);
+    ax = GG.speed(V).ax;
+    ay = GG.speed(V).ay;
+    
 
 
-% % sort array
-% [accel.ax,idx] =sort(accel.ax);
-
-% plot acceleration
-figure
-plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
-testint =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','none');
-[xq, yq] = meshgrid(linspace(0,20), linspace(0,20));
-zq = testint(xq, yq);  % interpolated values on the grid
-figure;
-surf(xq, yq, zq);
-% shading interp;  % smooth surface
-xlabel('ax'); ylabel('ay'); zlabel('V');
-title('Interpolated Surface for Acceleration Envelope');
-colorbar;
-
-% plot decceleration
-figure
-plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
-testint =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','none');
-[xq, yq] = meshgrid(linspace(-20,0), linspace(0,20));
-zq = testint(xq, yq);  % interpolated values on the grid
-figure;
-surf(xq, yq, zq);
-% shading interp;  % smooth surface
-xlabel('ax'); ylabel('ay'); zlabel('V');
-title('Interpolated Surface for Brake Envelope');
-colorbar;
+% % % sort array
+% % [accel.ax,idx] =sort(accel.ax);
+% 
+% % plot acceleration
+% figure
+% plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
+% testint =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','none');
+% [xq, yq] = meshgrid(linspace(0,20), linspace(0,20));
+% zq = testint(xq, yq);  % interpolated values on the grid
+% figure;
+% surf(xq, yq, zq);
+% % shading interp;  % smooth surface
+% xlabel('ax'); ylabel('ay'); zlabel('V');
+% title('Interpolated Surface for Acceleration Envelope');
+% colorbar;
+% 
+% % plot decceleration
+% figure
+% plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
+% testint =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','none');
+% [xq, yq] = meshgrid(linspace(-20,0), linspace(0,20));
+% zq = testint(xq, yq);  % interpolated values on the grid
+% figure;
+% surf(xq, yq, zq);
+% % shading interp;  % smooth surface
+% xlabel('ax'); ylabel('ay'); zlabel('V');
+% title('Interpolated Surface for Brake Envelope');
+% colorbar;
 
 % interpolate performance envelope
 % findax =scatteredInterpolant(performance.v(:),performance.ay(:),performance.ax(:),'natural','boundary');
