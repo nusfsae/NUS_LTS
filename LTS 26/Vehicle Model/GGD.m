@@ -199,49 +199,74 @@ idxneg = performance.ax<0;
 accel.ax = performance.ax(idxpos);accel.ay = performance.ay(idxpos);accel.v = performance.v(idxpos);
 brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = performance.v(idxneg);
 
-% 2d interpolate ax/ay at each speed
-for i = 1:numel(velocityRange)
-    V = velocityRange(i);
-    ax = GG.speed(V).ax;
-    ay = GG.speed(V).ay;
-    
+
+%%
+close all
+
+% % define max and min for interpolant
+axmax = max(accel.ax);
+axmin = min(brake.ax);
+aymax = max([accel.ay(:);brake.ax(:)]);
+aymin = min([accel.ay(:);brake.ay(:)]);
+vmax = 35; vmin = 0;  
+
+% deceleration
+figure
+plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
+[vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(axmin, 0, 100));
+ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary'); 
+ayq = ayBrake(vq,axq);
+hold on
+surf(ayq,axq,vq);
+xlabel('ay'); ylabel('ax'); zlabel('V');
+title('Interpolated Surface for Brake Envelope');
+colorbar;
+% acceleration
+figure
+plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
+[vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(0, axmax, 100));
+ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary'); 
+ayq = ayAccel(vq,axq);
+hold on
+surf(ayq,axq,vq);
+xlabel('ay'); ylabel('ax'); zlabel('V');
+title('Interpolated Surface for Acceleration Envelope');
+colorbar;
 
 
-% % % sort array
-% % [accel.ax,idx] =sort(accel.ax);
-% 
-% % plot acceleration
-% figure
-% plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
-% testint =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','none');
-% [xq, yq] = meshgrid(linspace(0,20), linspace(0,20));
-% zq = testint(xq, yq);  % interpolated values on the grid
-% figure;
-% surf(xq, yq, zq);
-% % shading interp;  % smooth surface
-% xlabel('ax'); ylabel('ay'); zlabel('V');
-% title('Interpolated Surface for Acceleration Envelope');
-% colorbar;
-% 
-% % plot decceleration
-% figure
-% plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
-% testint =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','none');
-% [xq, yq] = meshgrid(linspace(-20,0), linspace(0,20));
-% zq = testint(xq, yq);  % interpolated values on the grid
-% figure;
-% surf(xq, yq, zq);
-% % shading interp;  % smooth surface
-% xlabel('ax'); ylabel('ay'); zlabel('V');
-% title('Interpolated Surface for Brake Envelope');
-% colorbar;
+%%
+
+% Doesnt Work -- different method: MATLAB curvefit
+% brake envelope
+inputData = [brake.v(:),brake.ax(:)];
+ft = fittype('poly22');
+fittedModel = fit(inputData,brake.ay(:),ft);
+[v_grid, ax_grid] = meshgrid(linspace(vmin, vmax, 50), linspace(axmin, 0, 50));
+ay_grid = fittedModel(v_grid, ax_grid);
+% Plot
+figure
+plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
+hold on
+surf(ay_grid, ax_grid, v_grid);
+xlabel('ay');
+ylabel('ax');
+zlabel('v');
+title('Fitted Performance Surface');
+
+
+%%
 
 % interpolate performance envelope
-% findax =scatteredInterpolant(performance.v(:),performance.ay(:),performance.ax(:),'natural','boundary');
-% finday =scatteredInterpolant(performance.v(:),performance.ax(:),performance.ay(:),'natural','boundary');
-% findv =scatteredInterpolant(performance.ax(:),performance.ay(:),performance.v(:),'natural','boundary');    
+axAccel =scatteredInterpolant(accel.v(:),accel.ay(:),accel.ax(:),'natural','boundary');
+ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary');
+vAccel =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','boundary');    
+axBrake =scatteredInterpolant(brake.v(:),brake.ay(:),brake.ax(:),'natural','boundary');
+ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary');
+vBrake =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','boundary');    
 
 
+
+%%
 % 
 % figure
 % plot(GG.speed(i).ay,GG.speed(i).ax)
