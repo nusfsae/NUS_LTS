@@ -22,11 +22,18 @@ sim.throttle = zeros(num,1);
 GGD;
 
 %%
+
+figure
 corner;
-hold on;plot(dist,sim.speed);
-%%
+
+% plot BSP
+plot(dist,sim.speed);
+
 drivebrake;
-figure
+
+% plot speed profile
 hold on;plot(dist,sim.speed);
+% plot ax/ay
 figure
-plot(dist,sim.ay/9.81);figure; plot(dist,sim.ax/9.81);
+plot(dist,sim.ay/9.81);yyaxis left;ylabel('ay');
+hold on; plot(dist,sim.ax/9.81);yyaxis right;ylabel('ax');
