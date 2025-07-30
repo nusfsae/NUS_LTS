@@ -38,14 +38,15 @@ p_opts.print_time = 0;
 s_opts.print_level = 0;
 
 % % Mesh Discretization
-Vnum = 10;        % number of speed variations
-Gnum = 20;        % number of combine ax/ay variations
-velocityRange = linspace(v_min,v_max - 5, Vnum); % Discrete Velocity Points
+Vnum = 30;        % number of speed variations
+Gnum = 10;        % number of combine ax/ay variations
+velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
 
 tic
 % % Create empty performance envelope GG
 GG = struct();
 GG.speed = struct();
+figure
 
 
 % % Steady State Speed Setting
@@ -156,15 +157,15 @@ for i = 1:numel(velocityRange)
 end
 
 
-% % Extract maximum performance at each speed
+%%
+% % Performance Envelope for maximum cornering G
+% Extract maximum performance at each speed
 ymax = zeros(2,length(GG.speed));
 for i = 1:length(GG.speed)
     ymax(1,i) = GG.speed(i).speed;
     ymax(2,i) = GG.speed(i).aymax;
 end
-
-
-% % Create cornering G performance envelope
+% Create cornering G performance envelope
 performance = struct();
 Rnum = length(ymax);
 performance.speed = zeros(1,Rnum);
@@ -177,8 +178,16 @@ for v = 1:length(ymax)
     performance.radius(v) = radius;
 end
 % interpolate radius at each speed
-PerfEnv =spline(performance.speed,performance.radius);
-% 3xN array for [speed,ay,ax]
+PerfEnv =spline(performance.radius,performance.speed);
+% % plot speed vs radius
+% figure
+% plot([0:30],ppval(PerfEnv,[0:30]))
+% xlabel('radius');ylabel('speed')
+
+
+%%
+% % Split performace envelope into Accel and Brake
+% Empty 3xN array for [speed,ay,ax]
 performance.v = zeros(1,Vnum*(Gnum+2));
 performance.ax = zeros(1,Vnum*(Gnum+2));
 performance.ay = zeros(1,Vnum*(Gnum+2));
@@ -200,16 +209,16 @@ accel.ax = performance.ax(idxpos);accel.ay = performance.ay(idxpos);accel.v = pe
 brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = performance.v(idxneg);
 
 
-%%
-close all
 
-% % define max and min for interpolant
+%%
+
+% % 3D interpolate Performance Envelope
+% define max and min for interpolant
 axmax = max(accel.ax);
 axmin = min(brake.ax);
 aymax = max([accel.ay(:);brake.ax(:)]);
 aymin = min([accel.ay(:);brake.ay(:)]);
 vmax = 35; vmin = 0;  
-
 % deceleration
 figure
 plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
@@ -236,22 +245,22 @@ colorbar;
 
 %%
 
-% Doesnt Work -- different method: MATLAB curvefit
-% brake envelope
-inputData = [brake.v(:),brake.ax(:)];
-ft = fittype('poly22');
-fittedModel = fit(inputData,brake.ay(:),ft);
-[v_grid, ax_grid] = meshgrid(linspace(vmin, vmax, 50), linspace(axmin, 0, 50));
-ay_grid = fittedModel(v_grid, ax_grid);
-% Plot
-figure
-plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
-hold on
-surf(ay_grid, ax_grid, v_grid);
-xlabel('ay');
-ylabel('ax');
-zlabel('v');
-title('Fitted Performance Surface');
+% % Doesnt Work -- different method: MATLAB curvefit
+% % brake envelope
+% inputData = [brake.v(:),brake.ax(:)];
+% ft = fittype('poly22');
+% fittedModel = fit(inputData,brake.ay(:),ft);
+% [v_grid, ax_grid] = meshgrid(linspace(vmin, vmax, 50), linspace(axmin, 0, 50));
+% ay_grid = fittedModel(v_grid, ax_grid);
+% % Plot
+% figure
+% plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
+% hold on
+% surf(ay_grid, ax_grid, v_grid);
+% xlabel('ay');
+% ylabel('ax');
+% zlabel('v');
+% title('Fitted Performance Surface');
 
 
 %%
@@ -286,93 +295,3 @@ vBrake =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','bound
 % figure
 % plot(GG.Sxr)
 toc
-
-
-
-
-
-
-
-
-
-% % % Vehicle Model
-% 
-% % % Resolve lataral and longitudinal limit
-% function [ax,ay,Fx,Fy,Mz] = vehicle(x,mass,wheelbase,mass_front,V)
-% 
-% % define unknowns
-% delta = x(1);  % steering angle
-% beta = x(2);   % body slip
-% dpsi = x(3);   % yaw rate
-% Sxf = x(4);    % front slip ratio
-% Sxr = x(5);    % rear slip ratio
-% 
-% % % Equations of Motions
-% % Distance from CG to front axle and CG to rear
-% lf = wheelbase*mass_front;
-% lr = wheelbase*(1-mass_front);
-% % velocities in vehicle fixed coordinates
-% dx = V*cos(beta);
-% dy = V*sin(beta);
-% % front/rear slip angles (Milliken pg.148)
-% Saf = -delta + atan((dy + lf*dpsi)/dx);
-% Sar = atan((dy - lr*dpsi)/dx);
-% 
-% % % Tire model
-% % tire parameters
-% A =1800; B =1.5; C =25; D =1; E =20;
-% % pure slip
-% Fxpf = A*sin(B*atan(C*Sxf));
-% Fypf = -A*sin(B*atan(C*tan(Saf)));
-% Fxpr = A*sin(B*atan(C*Sxr));
-% Fypr = -A*sin(B*atan(C*tan(Sar)));
-% % combined slip
-% Fxf = Fxpf * cos(D*atan(E*tan(Saf)));
-% Fyf = Fypf * cos(D*atan(E*Sxf));
-% Fxr = Fxpr * cos(D*atan(E*tan(Sar)));
-% Fyr = Fypr * cos(D*atan(E*Sxr));
-% 
-% % % Equations of Motions
-% % sum of forces in vehicle fixed coordinates
-% Fy = Fyf*cos(delta) + Fxf*sin(delta) + Fyr;
-% Fx = Fxf*cos(delta) - Fyf*sin(delta) + Fxr;
-% Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
-% % accelerations in path tangential coordinates
-% ax = -(1/mass * (Fy*sin(beta) + Fx*cos(beta)))/9.81;
-% ay = -(1/mass * (Fy*cos(beta) - Fx*sin(beta)))/9.81;
-% end
-
-
-
-
-% % FMINCON Version for Braking G Solver
-% problem.options = optimoptions('fmincon','Display','off','Algorithm','sqp');
-% problem.objective = @(x) longitudinal(x,mass,wheelbase,mass_front,V);
-% problem.x0 = [0 0 0 -0.2 -0.2]; % initial guess
-% problem.lb = [-del_max -deg2rad(20) -deg2rad(90) -0.2 -0.2]; % lower bound
-% problem.ub = [del_max deg2rad(20) deg2rad(90) 0.2 0.2]; % upper bound
-% problem.solver = 'fmincon';
-% [x, fval] = fmincon(problem);
-% ax = -fval; % (g)
-% ay = 0; % (g)
-% GG.ax(1,num) = ax;
-% GG.ay(1,num) = ay;
-
-% % OPTIMPROBLEM Version for Lateral G Solver
-% y = optimvar('y',5,"LowerBound",[-del_max -deg2rad(20) -deg2rad(90) -0.2 -0.2],"UpperBound",[del_max deg2rad(20) deg2rad(90) 0.2 0.2]);
-% [ax,ay,Fx,Fy,Mz] = fcn2optimexpr(@vehicle,y,mass,wheelbase,mass_front,V);
-% corner = optimproblem('Objective',ay,'ObjectiveSense','max');
-% corner.Constraints.long = ax == GG.ax(1,index);
-% corner.Constraints.yawMoment = Mz == 0;
-% corner.Constraints.yawRate = ay-V*y(3) == 0;
-% x0.y = [guessDelta guessBeta guessDpsi guessSxf guessSxr];
-% x0.y = [0 0 0 0 0]; % initial guess
-% opts = optimoptions('fmincon', 'Display', 'iter-detailed');
-% [y, fval] = solve(corner, x0, 'Options', opts);
-% ay = fval; % (g)
-% GG.ay(1,index) = ay;
-% GG.delta(1,index) = y.y(1);
-% GG.beta(1,index) = y.y(2);
-% GG.dpsi(1,index) = y.y(3);
-% GG.Sxf(1,index) = y.y(4);
-% GG.Sxr(1,index) = y.y(5);
