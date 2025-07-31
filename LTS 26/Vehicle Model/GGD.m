@@ -179,10 +179,6 @@ for v = 1:length(ymax)
 end
 % interpolate radius at each speed
 PerfEnv =spline(performance.radius,performance.speed);
-% % plot speed vs radius
-% figure
-% plot([0:30],ppval(PerfEnv,[0:30]))
-% xlabel('radius');ylabel('speed')
 
 
 %%
@@ -245,26 +241,6 @@ colorbar;
 
 %%
 
-% % Doesnt Work -- different method: MATLAB curvefit
-% % brake envelope
-% inputData = [brake.v(:),brake.ax(:)];
-% ft = fittype('poly22');
-% fittedModel = fit(inputData,brake.ay(:),ft);
-% [v_grid, ax_grid] = meshgrid(linspace(vmin, vmax, 50), linspace(axmin, 0, 50));
-% ay_grid = fittedModel(v_grid, ax_grid);
-% % Plot
-% figure
-% plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
-% hold on
-% surf(ay_grid, ax_grid, v_grid);
-% xlabel('ay');
-% ylabel('ax');
-% zlabel('v');
-% title('Fitted Performance Surface');
-
-
-%%
-
 % interpolate performance envelope
 axAccel =scatteredInterpolant(accel.v(:),accel.ay(:),accel.ax(:),'natural','boundary');
 ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary');
@@ -273,25 +249,4 @@ axBrake =scatteredInterpolant(brake.v(:),brake.ay(:),brake.ax(:),'natural','boun
 ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary');
 vBrake =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','boundary');    
 
-
-
-%%
-% 
-% figure
-% plot(GG.speed(i).ay,GG.speed(i).ax)
-% figure
-% yyaxis left
-% plot(rad2deg(GG.delta))
-% yyaxis right
-% plot(rad2deg(GG.beta))
-% figure
-% plot(GG.delta)
-% figure
-% plot(GG.beta)
-% figure
-% plot(GG.dpsi)
-% figure
-% plot(GG.Sxf)
-% figure
-% plot(GG.Sxr)
 toc
