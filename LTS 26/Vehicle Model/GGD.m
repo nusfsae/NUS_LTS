@@ -40,13 +40,14 @@ maxDpsi = deg2rad(120); % deg/s to rad/s
 % % IPOPT Settings
 p_opts = struct;
 s_opts = struct;
-s_opts.expand =true;
+opts.expand =true;
 p_opts.print_time = 1;
 s_opts.print_level = 5; % 0: no display, 5: display
 p_opts.ipopt.accept_every_trial_step = true;
-p_opts.ipopt.constr_viol_tol =1e-6; % set tolerance 
-p_opts.ipopt.restoration_phase = 'no'; % disable restoration phase
+p_opts.ipopt.constr_viol_tol =1e-3; % set tolerance 
+p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
 p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
+
 
 
 
