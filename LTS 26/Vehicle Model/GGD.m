@@ -1,6 +1,8 @@
 
 import casadi.*
 
+HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
+
 % % Vehicle Model
 mass = 262;  % vehicle mass (kg)
 den = 1.196;  % air density
@@ -22,6 +24,10 @@ Inertia = 106;
 v_min = 10; % [m/s] minimum speed for GG calculation
 v_max = (max_rpm/FDR)*pi*2*R/60; % maximum speed
 PMaxLimit = 80; % [kW] Power Limit
+tire = HoosierR25; % tire model
+P = 9; % tire pressue (psi)
+IA = 0; % inclination angle (rad)
+
 
 % % Bounds for Path Constraints
 maxDelta = deg2rad(25); % maximum steering angle (rad)
@@ -34,8 +40,15 @@ maxDpsi = deg2rad(120); % deg/s to rad/s
 % % IPOPT Settings
 p_opts = struct;
 s_opts = struct;
-p_opts.print_time = 0;
-s_opts.print_level = 0;
+s_opts.expand =true;
+p_opts.print_time = 1;
+s_opts.print_level = 5; % 0: no display, 5: display
+p_opts.ipopt.accept_every_trial_step = true;
+p_opts.ipopt.constr_viol_tol =1e-6; % set tolerance 
+p_opts.ipopt.restoration_phase = 'no'; % disable restoration phase
+p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
+
+
 
 % % Mesh Discretization
 Vnum = 30;        % number of speed variations
@@ -219,7 +232,7 @@ vmax = 35; vmin = 0;
 figure
 plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
 [vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(axmin, 0, 100));
-ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary'); 
+ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','linear'); 
 ayq = ayBrake(vq,axq);
 hold on
 surf(ayq,axq,vq);
@@ -230,7 +243,7 @@ colorbar;
 figure
 plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
 [vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(0, axmax, 100));
-ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary'); 
+ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','linear'); 
 ayq = ayAccel(vq,axq);
 hold on
 surf(ayq,axq,vq);

@@ -14,8 +14,16 @@ Saf = -delta + atan((dy + lf*dpsi)/dx);
 Sar = atan((dy - lr*dpsi)/dx);
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
+Lift = 0.5*den*(V^2)*CLs*farea;
+% normal load per tire
+Fz = (mass*9.81+Lift)/4;
 
 % % Tire model
+% pure slip
+% Fxpf = tires(tire,Fz*2,Sxf,0,IA,P);
+% Fypf = tires(tire,Fz*2,0,Saf,IA,P);
+% Fxpr = tires(tire,Fz*2,Sxr,0,IA,P);
+% Fypr = tires(tire,Fz*2,0,Sar,IA,P);
 % tire parameters
 A =1800; B =1.5; C =25; D =1; E =20;
 % pure slip
@@ -34,8 +42,18 @@ Fyr = Fypr * cos(D*atan(E*Sxr));
 Fy = Fyf*cos(delta) + Fxf*sin(delta) + Fyr;
 Fx = Fxf*cos(delta) - Fyf*sin(delta) + Fxr;
 Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
-% Power Output
+
+% % Powertrain model
+Fxpwt = 0.9*Ipeak*220*FDR/R;
+v_weak =86.5/3.6;
+Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
+if V>v_weak
+    Fxpwt =0.9*Ipeak*Iweak*FDR/R;
+end
+Fx =min(Fx,Fxpwt);
+% Power limit
 PowerOut = Fx*V/1000; % [kW]
+
 % accelerations in path tangential coordinates
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
 ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));

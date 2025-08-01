@@ -16,7 +16,12 @@ cg_h = 0.256;
 ab = 0.5310665;
 mass_front = 0.5095; % mass distribution to front
 Inertia = 106;
+v_min = 10; % [m/s] minimum speed for GG calculation
 v_max = (max_rpm/FDR)*pi*2*R/60; % maximum speed
+PMaxLimit = 80; % [kW] Power Limit
+tire = HoosierR25; % tire model
+P = 9; % tire pressue (psi)
+IA = 0; % inclination angle (rad)
 
 
 import casadi.*
