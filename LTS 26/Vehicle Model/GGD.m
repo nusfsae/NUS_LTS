@@ -83,8 +83,12 @@ for i = 1:numel(velocityRange)
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
     prob.set_initial(dpsi,0);
+    if i>1
+        prob.set_initial(Sxf,GG.speed(i-1).Sxf(1));
+        prob.set_initial(Sxr,GG.speed(i-1).Sxr(1));
+    end
     % define constraints
-    prob.subject_to(PowerOut<=PMaxLimit);
+    % prob.subject_to(PowerOut<=PMaxLimit);
     prob.subject_to(Mz == 0);
     prob.subject_to(ay - V*dpsi == 0);
     prob.solver('ipopt', p_opts, s_opts);
@@ -102,6 +106,11 @@ for i = 1:numel(velocityRange)
     GG.speed(i).Saf(1) = x.value(Saf);
 
     % % braking G solver
+    % redefine initial guess
+    if i>1
+        prob.set_initial(Sxf,GG.speed(i-1).Sxf(end));
+        prob.set_initial(Sxr,GG.speed(i-1).Sxr(end));
+    end
     prob.minimize(ax);
     x = prob.solve();
     minAx = x.value(ax);
