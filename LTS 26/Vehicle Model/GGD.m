@@ -49,8 +49,6 @@ p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
 p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
 
 
-
-
 % % Mesh Discretization
 Vnum = 30;        % number of speed variations
 Gnum = 10;        % number of combine ax/ay variations
@@ -140,11 +138,11 @@ for i = 1:numel(velocityRange)
         vehicle;
         % define objective
         prob.minimize(-ay); % Maximum GG Envelope Radius
-        prob.set_initial(delta,0);
-        prob.set_initial(beta,0);
-        prob.set_initial(Sxf,0);
-        prob.set_initial(Sxr,0);
-        prob.set_initial(dpsi,0);
+        prob.set_initial(delta,GG.speed(i).delta(j-1));
+        prob.set_initial(beta,GG.speed(i).beta(j-1));
+        prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
+        prob.set_initial(Sxr,GG.speed(i).Sxr(j-1));
+        prob.set_initial(dpsi,GG.speed(i).dpsi(j-1));
         % define constraints
         prob.subject_to(Mz == 0);
         prob.subject_to(ax == ax_target);

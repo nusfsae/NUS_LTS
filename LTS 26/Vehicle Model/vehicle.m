@@ -19,11 +19,6 @@ Lift = 0.5*den*(V^2)*CLs*farea;
 Fz = (mass*9.81+Lift)/4;
 
 % % Tire model
-% pure slip
-% Fxpf = tires(tire,Fz*2,Sxf,0,IA,P);
-% Fypf = tires(tire,Fz*2,0,Saf,IA,P);
-% Fxpr = tires(tire,Fz*2,Sxr,0,IA,P);
-% Fypr = tires(tire,Fz*2,0,Sar,IA,P);
 % tire parameters
 A =1800; B =1.5; C =25; D =1; E =20;
 % pure slip
@@ -50,9 +45,11 @@ Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak;
 if V>v_weak
     Fxpwt =0.9*Ipeak*Iweak*FDR/R;
 end
-Fxtotal =min(Fx,Fxpwt);
+if Fxpwt<Fx
+    Fx = Fxpwt;
+end
 
 % accelerations in path tangential coordinates
-ax = (1/mass * (Fy*sin(beta) + Fxtotal*cos(beta) - Drag));
+ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
 ay = (1/mass * (Fy*cos(beta) - Fxtotal*sin(beta)));
 
