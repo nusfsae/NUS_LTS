@@ -89,6 +89,7 @@ for i = 1:numel(velocityRange)
     % prob.subject_to(PowerOut<=PMaxLimit);
     prob.subject_to(Mz == 0);
     prob.subject_to(ay - V*dpsi == 0);
+    prob.subject_to(Fx<=Fxpwt);
     prob.solver('ipopt', p_opts, s_opts);
 
     % % acceleration G solver

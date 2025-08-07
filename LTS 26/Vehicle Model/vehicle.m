@@ -45,11 +45,8 @@ Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak;
 if V>v_weak
     Fxpwt =0.9*Ipeak*Iweak*FDR/R;
 end
-if Fxpwt<Fx
-    Fx = Fxpwt;
-end
 
 % accelerations in path tangential coordinates
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
-ay = (1/mass * (Fy*cos(beta) - Fxtotal*sin(beta)));
+ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 
