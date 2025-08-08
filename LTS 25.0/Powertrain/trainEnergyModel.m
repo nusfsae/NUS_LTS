@@ -3,7 +3,7 @@
 % --------------------
 % Load + Preprocess Data
 % --------------------
-load('D:\FSAEMain\LTS 25.0\Vehicle Model\Test Run 12 Clean.mat')
+load('D:\FSAEMain\LTS 25.0\Powertrain\Test Run 12 Clean.mat');
 disp("Loading and filtering data...");
 
 % Extract filtered training data (example: skip braking)

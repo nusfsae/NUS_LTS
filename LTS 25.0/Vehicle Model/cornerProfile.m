@@ -26,7 +26,7 @@ for point = 1:num
         %find max corner speed using 'v_calculater' function
         [BSP(point),SAprofile(point)] = calculateCornerV(tyre_model,mass,air_density,frontel_area,CLc,curv,camber, ...
             alpha,max_rpm,FDR,R,tc_lat,sen_lat,phit,P,wheelbase,del_max,cg_h,longG,ab);
-        latG(point) = (BSP(point)^2/curv)/9.81;     
+        latG(point) = (BSP(point)^2/curv)/9.81;
     end
 
 end
