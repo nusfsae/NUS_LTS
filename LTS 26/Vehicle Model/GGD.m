@@ -1,7 +1,7 @@
 
 import casadi.*
 
-HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
+% HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
 
 % % Vehicle Model
 mass = 262;  % vehicle mass (kg)
@@ -24,7 +24,7 @@ Inertia = 106;
 v_min = 10; % [m/s] minimum speed for GG calculation
 v_max = (max_rpm/FDR)*pi*2*R/60; % maximum speed
 PMaxLimit = 80; % [kW] Power Limit
-tire = HoosierR25; % tire model
+% tire = HoosierR25; % tire model
 P = 9; % tire pressue (psi)
 IA = 0; % inclination angle (rad)
 
@@ -32,7 +32,7 @@ IA = 0; % inclination angle (rad)
 % % Bounds for Path Constraints
 maxDelta = deg2rad(25); % maximum steering angle (rad)
 maxSa = deg2rad(10);
-maxBeta = deg2rad(10);
+maxBeta = deg2rad(5);
 maxSxf = 0.1;
 maxSxr = 0.1;
 maxDpsi = deg2rad(120); % deg/s to rad/s
@@ -41,12 +41,12 @@ maxDpsi = deg2rad(120); % deg/s to rad/s
 p_opts = struct;
 s_opts = struct;
 opts.expand =true;
-p_opts.print_time = 1;
-s_opts.print_level = 5; % 0: no display, 5: display
-p_opts.ipopt.accept_every_trial_step = true;
-p_opts.ipopt.constr_viol_tol =1e-3; % set tolerance 
-p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
-p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
+p_opts.print_time = 0;
+s_opts.print_level = 0; % 0: no display, 5: display
+% p_opts.ipopt.accept_every_trial_step = true;
+% p_opts.ipopt.constr_viol_tol =1e-3; % set tolerance 
+% p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
+% p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
 
 
 % % Mesh Discretization
@@ -81,12 +81,12 @@ for i = 1:numel(velocityRange)
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
     prob.set_initial(dpsi,0);
-    if i>1
-        prob.set_initial(Sxf,GG.speed(i-1).Sxf(1));
-        prob.set_initial(Sxr,GG.speed(i-1).Sxr(1));
-    end
+%     if i>1
+%         prob.set_initial(Sxf,GG.speed(i-1).Sxf(1));
+%         prob.set_initial(Sxr,GG.speed(i-1).Sxr(1));
+%     end
     % define constraints
-    % prob.subject_to(PowerOut<=PMaxLimit);
+    prob.subject_to(PowerOut<=PMaxLimit);
     prob.subject_to(Mz == 0);
     prob.subject_to(ay - V*dpsi == 0);
     prob.solver('ipopt', p_opts, s_opts);
@@ -105,10 +105,10 @@ for i = 1:numel(velocityRange)
 
     % % braking G solver
     % redefine initial guess
-    if i>1
-        prob.set_initial(Sxf,GG.speed(i-1).Sxf(end));
-        prob.set_initial(Sxr,GG.speed(i-1).Sxr(end));
-    end
+%     if i>1
+%         prob.set_initial(Sxf,GG.speed(i-1).Sxf(end));
+%         prob.set_initial(Sxr,GG.speed(i-1).Sxr(end));
+%     end
     prob.minimize(ax);
     x = prob.solve();
     minAx = x.value(ax);
@@ -138,11 +138,11 @@ for i = 1:numel(velocityRange)
         vehicle;
         % define objective
         prob.minimize(-ay); % Maximum GG Envelope Radius
-        prob.set_initial(delta,GG.speed(i).delta(j-1));
-        prob.set_initial(beta,GG.speed(i).beta(j-1));
-        prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
-        prob.set_initial(Sxr,GG.speed(i).Sxr(j-1));
-        prob.set_initial(dpsi,GG.speed(i).dpsi(j-1));
+%         prob.set_initial(delta,GG.speed(i).delta(j-1));
+%         prob.set_initial(beta,GG.speed(i).beta(j-1));
+%         prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
+%         prob.set_initial(Sxr,GG.speed(i).Sxr(j-1));
+%         prob.set_initial(dpsi,GG.speed(i).dpsi(j-1));
         % define constraints
         prob.subject_to(Mz == 0);
         prob.subject_to(ax == ax_target);
