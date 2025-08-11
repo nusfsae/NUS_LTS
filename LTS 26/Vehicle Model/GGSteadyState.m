@@ -65,7 +65,7 @@ GG.Sar = zeros(1,Gnum);
 
 
 % % Steady State Speed Setting
-V = 24; % (m/s)
+V = 20; % (m/s)
 
 GG.speed = V;
 % Maximum Forward Acceleration
@@ -141,7 +141,12 @@ for j = 2:numel(GG.ax)-1
     vehicle;
     % define objective
     prob.minimize(-ay); % Maximum GG Envelope Radius
-    if j>1
+    prob.set_initial(delta,0);
+    prob.set_initial(beta,0);
+    prob.set_initial(Sxf,0);
+    prob.set_initial(Sxr,0);
+    prob.set_initial(dpsi,0);
+    if j>2
         prob.set_initial(delta,GG.delta(j-1));
         prob.set_initial(beta,GG.beta(j-1));
         prob.set_initial(Sxf,GG.Sxf(j-1));
@@ -168,11 +173,11 @@ for j = 2:numel(GG.ax)-1
         GG.Sxr(j) = x.value(Sxr);
         GG.Sar(j) = x.value(Sar);
         GG.Saf(j) = x.value(Saf);
+    catch
+        GG.ax(j) = NaN;
+        GG.ay(j) = NaN;
+        fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
     end
-    %     GG.ax(j) = NaN;
-    %     GG.ay(j) = NaN;
-    %     fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
-    % end
 end
 
 

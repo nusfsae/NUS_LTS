@@ -1,4 +1,5 @@
 
+addpath('C:\Users\Patri\casadi-3.6.7-windows64-matlab2018b')
 import casadi.*
 
 HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
@@ -164,10 +165,10 @@ for i = 1:numel(velocityRange)
             GG.speed(i).Sxr(j) = x.value(Sxr);
             GG.speed(i).Sar(j) = x.value(Sar);
             GG.speed(i).Saf(j) = x.value(Saf);
-        % catch
-        %     GG.speed(i).ax(j) = NaN;
-        %     GG.speed(i).ay(j) = NaN;
-        %     fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
+        catch
+            GG.speed(i).ax(j) = NaN;
+            GG.speed(i).ay(j) = NaN;
+            fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
         end
     end
     % store maximum ay at each speed
