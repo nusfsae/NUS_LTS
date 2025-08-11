@@ -1,5 +1,7 @@
 % % Vehicle Model
 
+% % Resolve lataral and longitudinal limit
+
 % % Equations of Motions
 % Distance from CG to front axle and CG to rear
 lf = wheelbase*mass_front;
@@ -10,9 +12,11 @@ dy = V*sin(beta);
 % front/rear slip angles (Milliken pg.148)
 Saf = -delta + atan((dy + lf*dpsi)/dx);
 Sar = atan((dy - lr*dpsi)/dx);
-
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
+Lift = 0.5*den*(V^2)*CLs*farea;
+% normal load per tire
+Fz = (mass*9.81+Lift)/4;
 
 % % Tire model
 % tire parameters
@@ -34,9 +38,17 @@ Fy = Fyf*cos(delta) + Fxf*sin(delta) + Fyr;
 Fx = Fxf*cos(delta) - Fyf*sin(delta) + Fxr;
 Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
 
-% Power Output
-PowerOut = Fx*V/1000; % [kW]
-
+% % Powertrain model
+Fxpwt = 0.9*Ipeak*220*FDR/R;
+v_weak =86.5/3.6;
+Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
+% if V>v_weak
+%     Fxpwt =0.9*Ipeak*Iweak*FDR/R;
+% end
+% if Fxpwt<Fx
+%     Fx = Fxpwt;
+% end
+PowerOut = Fx*V/1000;
 % accelerations in path tangential coordinates
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
 ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
