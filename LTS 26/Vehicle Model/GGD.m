@@ -1,4 +1,5 @@
 
+addpath('C:\Users\Patri\casadi-3.6.7-windows64-matlab2018b')
 import casadi.*
 
 % HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
@@ -89,6 +90,7 @@ for i = 1:numel(velocityRange)
     prob.subject_to(PowerOut<=PMaxLimit);
     prob.subject_to(Mz == 0);
     prob.subject_to(ay - V*dpsi == 0);
+    % prob.subject_to(Fx<=Fxpwt);
     prob.solver('ipopt', p_opts, s_opts);
 
     % % acceleration G solver

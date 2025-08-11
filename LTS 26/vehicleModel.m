@@ -1,6 +1,9 @@
-% % Vehicle Model
+function outputs = vehicleModel(delta, beta, Sxf, Sxr, dpsi, settings)
 
-% % Resolve lataral and longitudinal limit
+
+
+
+% % Vehicle Model
 
 % % Equations of Motions
 % Distance from CG to front axle and CG to rear
@@ -39,16 +42,19 @@ Fx = Fxf*cos(delta) - Fyf*sin(delta) + Fxr;
 Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
 
 % % Powertrain model
-Fxpwt = 0.9*Ipeak*220*FDR/R;
-v_weak =86.5/3.6;
-Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
-if V>v_weak
-    Fxpwt =0.9*Ipeak*Iweak*FDR/R;
-end
-alpha =10;
-Fx = smoothmin(Fxpwt,Fx,alpha);
+PowerOut = Fx*V/1000;
 
 % accelerations in path tangential coordinates
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
 ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 
+% Connect signals to outputs
+outputs = struct;
+outputs.ax = ax;
+outputs.ay = ay;
+outputs.Mz = Mz;
+outputs.PowerOut = PowerOut;
+outputs.Saf = Saf;
+outputs.Sar = Sar;
+
+end

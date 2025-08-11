@@ -5,7 +5,7 @@ farea = 1.157757;  % frontel area (m^2)
 CLc = 3.782684;
 CDc = 1.410518;
 CLs = 4.116061;
-CDs = 1.54709;  
+CDs = 1.54709;
 del_max = 0.565;  % maximum steering angle (rad)
 max_rpm = 5500;
 FDR = 3.36;
@@ -19,13 +19,35 @@ Inertia = 106;
 v_min = 10; % [m/s] minimum speed for GG calculation
 v_max = (max_rpm/FDR)*pi*2*R/60; % maximum speed
 PMaxLimit = 80; % [kW] Power Limit
-tire = HoosierR25; % tire model
-P = 9; % tire pressue (psi)
 IA = 0; % inclination angle (rad)
 
 
 import casadi.*
 
+% % Bounds for Path Constraints
+maxDelta = deg2rad(25); % maximum steering angle (rad)
+maxSa = deg2rad(10);
+maxBeta = deg2rad(10);
+maxSxf = 0.1;
+maxSxr = 0.1;
+maxDpsi = deg2rad(120); % deg/s to rad/s
+
+% % IPOPT Settings
+p_opts = struct;
+s_opts = struct;
+opts.expand =true;
+p_opts.print_time = 1;
+s_opts.print_level = 5; % 0: no display, 5: display
+p_opts.ipopt.accept_every_trial_step = true;
+p_opts.ipopt.constr_viol_tol =1e-3; % set tolerance 
+p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
+p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
+
+
+% % Mesh Discretization
+Vnum = 30;        % number of speed variations
+Gnum = 10;        % number of combine ax/ay variations
+velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
 
 tic
 % % Create empty performance envelope GG
@@ -43,88 +65,39 @@ GG.Sar = zeros(1,Gnum);
 
 
 % % Steady State Speed Setting
-V = 24; % (m/s)
+V = 20; % (m/s)
 
-% define variable constraints
-% relax slip angle at high speed
-if V >= 17 && V <= 23
-    maxSa = deg2rad(8);
-elseif V > 23 && V <= 25 || V <= 14
-    maxSa = deg2rad(10);
-elseif V > 25 && V <= 30 
-    maxSa = deg2rad(12);
-elseif V > 30 && V <= 33
-    maxSa = deg2rad(20);
-elseif V>33
-    maxSa = deg2rad(22);
-else
-    maxSa = deg2rad(5);
-end
-maxBeta = deg2rad(20);
-% relax yaw rate at high speed
-% if V >= 20 && V <= 30
-%     maxDpsi = deg2rad(120);
-if V>30
-    maxDpsi = deg2rad(140);
-else
-    maxDpsi = deg2rad(90);
-end
-if V == 20 
-    maxDpsi = deg2rad(120);
-end
-if 21<=V<= 22
-    maxDpsi = deg2rad(100);
-end
-maxSxf = 0.1;
-maxSxr = 0.1;
-
-
-% % Braking G Solver
-prob = [];
+GG.speed = V;
+% Maximum Forward Acceleration
+prob = casadi.Opti();
+% Initialise Decision Variables
+delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);       % steering angle (rad)
+beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);           % body slip (rad)
+Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);               % front slip ratio
+Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);               % rear slip ratio
+dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);           % Yaw rate (rad/s)
+% Call Vehicle Model
 vehicle;
-% define objective
-prob.minimize(ax);
 % define initial guess
 prob.set_initial(delta,0);
 prob.set_initial(beta,0);
-prob.set_initial(dpsi,0);
-prob.set_initial(Sxf,-0.05);
-prob.set_initial(Sxr,-0.05);
-% optimization results
-p_opts = struct;
-s_opts = struct;
-s_opts.print_level = 5;
-prob.solver('ipopt', p_opts, s_opts);
-x = prob.solve();
-GG.ax(Gnum) = x.value(ax);
-GG.ay(Gnum) = x.value(ay);
-GG.delta(Gnum) = x.value(delta);
-GG.beta(Gnum) = x.value(beta);
-GG.dpsi(Gnum) = x.value(dpsi);
-GG.Sxf(Gnum) = x.value(Sxf);
-GG.Sxr(Gnum) = x.value(Sxr);
-GG.Sar(Gnum) = x.value(Sar);
-GG.Saf(Gnum) = x.value(Saf);
-
-
-% % Acceleration G Solver
-prob = [];
-vehicle;
-% define objective
-prob.minimize(-ax);
-% define initial guess
-prob.set_initial(delta,0);
-prob.set_initial(beta,0);
-prob.set_initial(dpsi,0);
 prob.set_initial(Sxf,0);
 prob.set_initial(Sxr,0);
+prob.set_initial(dpsi,0);
+if V>10
+    prob.set_initial(Sxf,GG.Sxf(1));
+    prob.set_initial(Sxr,GG.Sxr(1));
+end
 % define constraints
-prob.subject_to(ax<=atractive);
-% optimization results
-prob.solver('ipopt');
+% prob.subject_to(PowerOut<=PMaxLimit);
+prob.subject_to(Mz == 0);
+prob.subject_to(ay - V*dpsi == 0);
+prob.solver('ipopt', p_opts, s_opts);
+
+% % acceleration G solver
+prob.minimize(-ax);
 x = prob.solve();
-GG.ax(1) = x.value(ax);
-GG.ay(1) = x.value(ay);
+maxAx = x.value(ax);
 GG.delta(1) = x.value(delta);
 GG.beta(1) = x.value(beta);
 GG.dpsi(1) = x.value(dpsi);
@@ -133,78 +106,84 @@ GG.Sxr(1) = x.value(Sxr);
 GG.Sar(1) = x.value(Sar);
 GG.Saf(1) = x.value(Saf);
 
-
-% % Spread equally longitudinal G values across performance envelope
-GG.ax = linspace(GG.ax(1),GG.ax(Gnum),length(GG.ax));
-
-
-% % Power Margin Lateral G Solver
-prob = [];
-vehicle;
-% define objective
-prob.minimize(-ay);
-% define initial guess
-prob.set_initial(delta,deg2rad(0));
-prob.set_initial(beta,deg2rad(0));
-prob.set_initial(dpsi,0);
-prob.set_initial(Sxf,0);
-prob.set_initial(Sxr,0);
-% define constraints
-prob.subject_to(ax == GG.ax(1));
-prob.subject_to(Mz == 0);
-prob.subject_to(ay-V*dpsi == 0);
-prob.subject_to(-maxSa<=Saf<=maxSa);
-prob.subject_to(-maxSa<=Sar<=maxSa);
-% optimization results
-prob.solver('ipopt');
+% % braking G solver
+% redefine initial guess
+if V>10
+    prob.set_initial(Sxf,GG.Sxf(end));
+    prob.set_initial(Sxr,GG.Sxr(end));
+end
+prob.minimize(ax);
 x = prob.solve();
-GG.ax(2) = x.value(ax);
-GG.ay(2) = x.value(ay);
-GG.delta(2) = x.value(delta);
-GG.beta(2) = x.value(beta);
-GG.dpsi(2) = x.value(dpsi);
-GG.Sxf(2) = x.value(Sxf);
-GG.Sxr(2) = x.value(Sxr);
-GG.Sar(2) = x.value(Sar);
-GG.Saf(2) = x.value(Saf);
+minAx = x.value(ax);
+GG.delta(numel(velocityRange)+2) = x.value(delta);
+GG.beta(numel(velocityRange)+2) = x.value(beta);
+GG.dpsi(numel(velocityRange)+2) = x.value(dpsi);
+GG.Sxf(numel(velocityRange)+2) = x.value(Sxf);
+GG.Sxr(numel(velocityRange)+2) = x.value(Sxr);
+GG.Sar(numel(velocityRange)+2) = x.value(Sar);
+GG.Saf(numel(velocityRange)+2) = x.value(Saf);
 
+% % equal spread ax to -ax
+GG.ax = [maxAx, linspace(maxAx, minAx, Gnum), minAx];
+GG.ay = zeros(1, numel(GG.ax));
 
-% % Lateral G Solver
-for i = 3:Gnum-1
-    prob = [];
+% Lateral G Solver
+for j = 2:numel(GG.ax)-1
+    ax_target = GG.ax(j);
+    prob = casadi.Opti();
+    % Decision Variables
+    delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);        % steering angle (rad)
+    beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
+    Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
+    Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
+    dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);            % Yaw rate (rad/s)
+    % Call Vehicle Model
     vehicle;
     % define objective
-    prob.minimize(-ay);
-    % define initial guess
-    prob.set_initial(delta,deg2rad(0));
-    prob.set_initial(beta,deg2rad(0));
-    prob.set_initial(dpsi,0);
+    prob.minimize(-ay); % Maximum GG Envelope Radius
+    prob.set_initial(delta,0);
+    prob.set_initial(beta,0);
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
+    prob.set_initial(dpsi,0);
+    if j>2
+        prob.set_initial(delta,GG.delta(j-1));
+        prob.set_initial(beta,GG.beta(j-1));
+        prob.set_initial(Sxf,GG.Sxf(j-1));
+        prob.set_initial(Sxr,GG.Sxr(j-1));
+        prob.set_initial(dpsi,GG.dpsi(j-1));
+    end
     % define constraints
-    prob.subject_to(ax == GG.ax(i));
     prob.subject_to(Mz == 0);
-    prob.subject_to(ay-V*dpsi == 0);
+    prob.subject_to(ax == ax_target);
+    prob.subject_to(ay - V*dpsi == 0);
     prob.subject_to(-maxSa<=Saf<=maxSa);
     prob.subject_to(-maxSa<=Sar<=maxSa);
     % optimization results
-    prob.solver('ipopt');
-    y = prob.solve();
-    GG.ax(i) = y.value(ax);
-    GG.ay(i) = y.value(ay);
-    GG.delta(i) = y.value(delta);
-    GG.beta(i) = y.value(beta);
-    GG.dpsi(i) = y.value(dpsi);
-    GG.Sxf(i) = y.value(Sxf);
-    GG.Sxr(i) = y.value(Sxr);
-    GG.Sar(i) = y.value(Sar);
-    GG.Saf(i) = y.value(Saf);
+    prob.solver('ipopt', p_opts, s_opts);
+    % security catch in case failure
+    try
+        x = prob.solve();
+        GG.ax(j) = x.value(ax);
+        GG.ay(j) = x.value(ay);
+        GG.delta(j) = x.value(delta);
+        GG.beta(j) = x.value(beta);
+        GG.dpsi(j) = x.value(dpsi);
+        GG.Sxf(j) = x.value(Sxf);
+        GG.Sxr(j) = x.value(Sxr);
+        GG.Sar(j) = x.value(Sar);
+        GG.Saf(j) = x.value(Saf);
+    catch
+        GG.ax(j) = NaN;
+        GG.ay(j) = NaN;
+        fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
+    end
 end
-% end
+
 
 
 figure
-plot(GG.ay,GG.ax)
+plot(GG.ay,GG.ax,'x')
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))
