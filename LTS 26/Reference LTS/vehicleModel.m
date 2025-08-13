@@ -1,25 +1,26 @@
-function outputs = vehicleModel(delta, beta, Sxf, Sxr, dpsi, settings)
-
-
-
+function outputs = vehicleModel(V, delta, beta, Sxf, Sxr, dpsi, settings)
 
 % % Vehicle Model
 
 % % Equations of Motions
 % Distance from CG to front axle and CG to rear
-lf = wheelbase*mass_front;
-lr = wheelbase*(1-mass_front);
+lf = settings.chassis.wheelbase*(1-settings.chassis.weightDistribution);
+lr = settings.chassis.wheelbase*settings.chassis.weightDistribution;
+
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
+
 % front/rear slip angles (Milliken pg.148)
 Saf = -delta + atan((dy + lf*dpsi)/dx);
 Sar = atan((dy - lr*dpsi)/dx);
+
 % aerodynamics
-Drag = 0.5*den*(V^2)*CDs*farea;
-Lift = 0.5*den*(V^2)*CLs*farea;
+Drag = 0.5*settings.aero.rho*(V^2)*settings.aero.CDs*settings.aero.frontalArea;
+Lift = 0.5*settings.aero.rho*(V^2)*settings.aero.CLs*settings.aero.frontalArea;
+
 % normal load per tire
-Fz = (mass*9.81+Lift)/4;
+Fz = (settings.chassis.mass*9.81+Lift)/4;
 
 % % Tire model
 % tire parameters
@@ -45,8 +46,8 @@ Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
 PowerOut = Fx*V/1000;
 
 % accelerations in path tangential coordinates
-ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
-ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
+ax = (1/settings.chassis.mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
+ay = (1/settings.chassis.mass * (Fy*cos(beta) - Fx*sin(beta)));
 
 % Connect signals to outputs
 outputs = struct;
