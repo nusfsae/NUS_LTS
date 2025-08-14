@@ -4,12 +4,15 @@
 %open track model file
 cd('D:\Patrick\VD SIM\LTS25\Track Model')
 
+% select track
 track = '75m Accel';
 load(track)
 
 cd ('D:\Patrick\VD SIM\LTS25\Tyre Model')
 tyre = 'R25B_V2';
 load(tyre)
+
+% parameter
 
 R = 0.2032;%wheel radius
 mass = 276;

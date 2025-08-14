@@ -3,12 +3,17 @@
 % % Resolve lataral and longitudinal limit
 prob = casadi.Opti();
 
-% % define unknowns
+% define variables limit
+maxBeta = deg2rad(8);
+maxDpsi = deg2rad
+
+% define unknowns
 delta = prob.variable(); prob.subject_to(-del_max<=delta<=del_max);          % steering angle (rad)
-beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
-dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);            % yaw rate (rad/s)
-Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
-Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
+beta = prob.variable(); prob.subject_to(-deg2rad(8)<=beta<=deg2rad(8));   % body slip (rad)
+dpsi = prob.variable(); prob.subject_to(-deg2rad(90)<=dpsi<=deg2rad(90));   % yaw rate (rad/s)
+Sxf = prob.variable(); prob.subject_to(-0.1<=Sxf<=0.1);                    % front slip ratio
+Sxr = prob.variable(); prob.subject_to(-0.1<=Sxr<=0.1);                    % rear slip ratio
+
 
 % % Equations of Motions
 % Distance from CG to front axle and CG to rear
@@ -23,10 +28,12 @@ Sar = atan((dy - lr*dpsi)/dx);
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
 % Powertrian limit
-v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting % v_weak = 86.5/3.6; % 360V setting
-if V < v_weak  %24.03 % 360V setting
+if V<22.2  %24.03 % 360V setting
     tractive = 0.8*Ipeak*220*FDR/R-Drag;
-else    
+else
+    v_max = (max_rpm/FDR)*pi*2*R/60;
+    v_weak = 80/3.6; % field weakening start when speed = 80kmh for 333.75V setting
+    v_weak = 86.5/3.6; % 360V setting
     Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak;
     tractive = 0.8*Ipeak*Iweak*FDR/R;
 end
