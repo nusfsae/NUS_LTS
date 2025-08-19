@@ -28,50 +28,8 @@ FDR = 3.36;
 R = 0.2032;
 sen_lat = 1;
 
-% alpharad = deg2rad(0);
 
-% [Fy1,Fx1] = tires(tyre_model,1000,0.1,0,0,P,10);
-% 
-% P = convpres(P, 'psi', 'Pa');
-% inputsMF = [3000/4 0.1 alpharad camber phit 10 P];
-% [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-% Fx = abs(outMF(1))*4; % N/mm
-% disp(Fx)
-% figure
-% 
-% % zero long slip
-% for P = 5:10
-%     V = 10;
-%     Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
-%     Flist = zeros(6,2);
-% 
-%     for SR = 0:0.01:0.2
-% 
-% 
-%         % inputsMF = [Reaction_f SR 0 camber phit V P];
-%         % [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-%         [Fy1,Fx1] = tires(tyre_model,900,SR,0,0,P,10);
-%         Long = Fx1;
-%         index = int32(((SR-0)/0.01)+1);
-%         %disp(index)
-%         Flist(index,1) = Long*tc_long;
-%         Flist(index,2) = SR;
-% 
-% 
-%     end
-%     %f = fit(Flist(:,2),Flist(:,1),'poly2');
-%     plot(Flist(:,2),Flist(:,1),"--",'DisplayName',"Speed = "+ P+"km/h "+"[LC0]",'LineWidth',2);
-% 
-%     legend
-%     lg = legend
-%     lg.FontSize = 12
-%     hold on
-% end
-% 
-% sgtitle("Longitudinal Tire Data")
-% xlabel("Slip Angle (degree)",'FontSize',14)
-% ylabel("Lateral Force (N)",'FontSize',14)   
-% 
+
 % tyre_model = HoosierR25;
 % figure
 % 
@@ -111,27 +69,62 @@ sen_lat = 1;
 
 % tyre_model = HoosierR20;
 % 
-% figure
+figure
+
+% zero long slip
+for Fz = 500:500:2000
+    V = V/3.6;
+    % Fz = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
+
+    Flist = zeros(14/0.1,2);
+    for alphadeg = 1:0.1:15      
+
+        [Lat,Long0] = tires(tyre_model,Fz,0,alphadeg,IA,9,10);
+
+        index = int32(((alphadeg-0)/0.1)+1);
+        %disp(index)
+        Flist(index,1) = Lat;
+        Flist(index,2) = alphadeg;
+    end
+    %f = fit(Flist(:,2),Flist(:,1),'poly2');
+    plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Fz = "+ Fz+"N "+"[R25]");
+
+    legend
+    lg = legend;
+    lg.FontSize = 12;
+    hold on
+end
+
 % 
-% % zero long slip
-% for Fz = 500:500:3000
-%     V = V/3.6;
-%     % Fz = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
+% justify static pressure
 % 
-%     Flist = zeros(15/0.1,2);
-%     for alphadeg = 0:0.1:15        
+% clear P
 % 
-%         [Lat,Long0] = tires(tyre_model,Fz,0,alphadeg,IA,9,10);
+% figure 
 % 
-%         index = int32(((alphadeg-0)/0.1)+1);
+% 
+% 
+% 
+% for alphadeg = 3:2:14
+%     V = 10;
+%     Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
+%     Plist = zeros((13-7)/0.1+1,2);
+%     index = 0;
+%     for P = 7:0.1:13
+%         Ppa = convpres(P, 'psi', 'Pa');
+%         alpharad = deg2rad(alphadeg);
+%         inputsMF = [Reaction_f 0 alpharad camber phit V Ppa];
+%         [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+%         Lat = abs(outMF(2));
+%         index = index +1;
 %         %disp(index)
-%         Flist(index,1) = Lat*tc_long;
-%         Flist(index,2) = alphadeg;
+%         Plist(index,1) = Lat*tc_long;
+%         Plist(index,2) = P;
 % 
 % 
 %     end
 %     %f = fit(Flist(:,2),Flist(:,1),'poly2');
-%     plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Fz = "+ Fz+"N "+"[R20]");
+%     plot(Plist(:,2),Plist(:,1),"-",'DisplayName',"Slip Angle = "+ alphadeg+" degree ");
 % 
 %     legend
 %     lg = legend
@@ -140,87 +133,50 @@ sen_lat = 1;
 % end
 % 
 % 
-% justify static pressure
-
-clear P
-
-figure 
-
-
-
-
-for alphadeg = 3:2:14
-    V = 10;
-    Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
-    Plist = zeros((13-7)/0.1+1,2);
-    index = 0;
-    for P = 7:0.1:13
-        Ppa = convpres(P, 'psi', 'Pa');
-        alpharad = deg2rad(alphadeg);
-        inputsMF = [Reaction_f 0 alpharad camber phit V Ppa];
-        [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-        Lat = abs(outMF(2));
-        index = index +1;
-        %disp(index)
-        Plist(index,1) = Lat*tc_long;
-        Plist(index,2) = P;
-
-
-    end
-    %f = fit(Flist(:,2),Flist(:,1),'poly2');
-    plot(Plist(:,2),Plist(:,1),"-",'DisplayName',"Slip Angle = "+ alphadeg+" degree ");
-
-    legend
-    lg = legend
-    lg.FontSize = 12
-    hold on
-end
-
-
-sgtitle("Pressure Sensitivity at 36 km/h")
-xlabel("Tire Pressure (psi)")
-ylabel("Lateral Force (N)")  
-xlim([7 13]);
-% ylim([600 1500])
-
-clear P Plist
-
-figure 
-
-
-
-
-for sr =0.1:0.1:0.5
-    V = 10;
-    Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
-    Plist = zeros((10-5)/0.1+1,2);
-    index = 0;
-    for P = 5:0.1:10
-        Ppa = convpres(P, 'psi', 'Pa');
-        
-        inputsMF = [Reaction_f sr 0 camber phit V Ppa];
-        [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-        Long = abs(outMF(1));
-        index = index +1;
-        %disp(index)
-        Plist(index,1) = Long*tc_long;
-        Plist(index,2) = P;
-
-
-    end
-    %f = fit(Flist(:,2),Flist(:,1),'poly2');
-    plot(Plist(:,2),Plist(:,1),"-",'DisplayName',"SR = "+ sr+" degree ");
-
-    legend
-    lg = legend
-    lg.FontSize = 12
-    hold on
-end
-
-
-sgtitle("Pressure Sensitivity at 36 km/h")
-xlabel("Tire Pressure (psi)")
-ylabel("Longitudinal Force (N)")  
+% sgtitle("Pressure Sensitivity at 36 km/h")
+% xlabel("Tire Pressure (psi)")
+% ylabel("Lateral Force (N)")  
+% xlim([7 13]);
+% % ylim([600 1500])
+% 
+% clear P Plist
+% 
+% figure 
+% 
+% 
+% 
+% 
+% for sr =0.1:0.1:0.5
+%     V = 10;
+%     Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
+%     Plist = zeros((10-5)/0.1+1,2);
+%     index = 0;
+%     for P = 5:0.1:10
+%         Ppa = convpres(P, 'psi', 'Pa');
+% 
+%         inputsMF = [Reaction_f sr 0 camber phit V Ppa];
+%         [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+%         Long = abs(outMF(1));
+%         index = index +1;
+%         %disp(index)
+%         Plist(index,1) = Long*tc_long;
+%         Plist(index,2) = P;
+% 
+% 
+%     end
+%     %f = fit(Flist(:,2),Flist(:,1),'poly2');
+%     plot(Plist(:,2),Plist(:,1),"-",'DisplayName',"SR = "+ sr+" degree ");
+% 
+%     legend
+%     lg = legend
+%     lg.FontSize = 12
+%     hold on
+% end
+% 
+% 
+% sgtitle("Pressure Sensitivity at 36 km/h")
+% xlabel("Tire Pressure (psi)")
+% ylabel("Longitudinal Force (N)")  
 % xlim([0 1.5]);
 % ylim([600 2000])
 % 

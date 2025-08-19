@@ -36,12 +36,12 @@ maxDpsi = deg2rad(120); % deg/s to rad/s
 p_opts = struct;
 s_opts = struct;
 opts.expand =true;
-p_opts.print_time = 1;
-s_opts.print_level = 5; % 0: no display, 5: display
-p_opts.ipopt.accept_every_trial_step = true;
-p_opts.ipopt.constr_viol_tol =1e-3; % set tolerance 
-p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
-p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
+p_opts.print_time = 0;
+s_opts.print_level = 0; % 0: no display, 5: display
+% p_opts.ipopt.accept_every_trial_step = true;
+% p_opts.ipopt.constr_viol_tol =1e-3; % set tolerance 
+% p_opts.ipopt.restoration_phase ='yes'; % disable restoration phase
+% p_opts.ipopt.mu_strategy ='adaptive'; % change mu strategy
 
 
 % % Mesh Discretization
@@ -65,7 +65,7 @@ GG.Sar = zeros(1,Gnum);
 
 
 % % Steady State Speed Setting
-V = 20; % (m/s)
+V = 25; % (m/s)
 
 GG.speed = V;
 % Maximum Forward Acceleration
@@ -124,11 +124,11 @@ GG.Sar(numel(velocityRange)+2) = x.value(Sar);
 GG.Saf(numel(velocityRange)+2) = x.value(Saf);
 
 % % equal spread ax to -ax
-GG.ax = [maxAx, linspace(maxAx, minAx, Gnum), minAx];
+GG.ax = [linspace(maxAx, minAx, Gnum), minAx];
 GG.ay = zeros(1, numel(GG.ax));
 
 % Lateral G Solver
-for j = 2:numel(GG.ax)-1
+for j = 1:numel(GG.ax)-1
     ax_target = GG.ax(j);
     prob = casadi.Opti();
     % Decision Variables
@@ -176,14 +176,15 @@ for j = 2:numel(GG.ax)-1
     catch
         GG.ax(j) = NaN;
         GG.ay(j) = NaN;
-        fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
+        fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
     end
 end
-
+GG.ax = [maxAx,GG.ax];
+GG.ay = [0,GG.ay];
 
 
 figure
-plot(GG.ay,GG.ax,'x')
+plot(GG.ay,GG.ax)
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))
@@ -199,6 +200,7 @@ plot(GG.ay,GG.ax,'x')
 % plot(GG.Sxf)
 % figure
 % plot(GG.Sxr)
+
 toc
 
 

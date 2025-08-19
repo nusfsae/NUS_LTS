@@ -1,5 +1,5 @@
 
-addpath('C:\Users\Patri\casadi-3.6.7-windows64-matlab2018b')
+addpath('C:\Users\PC5\Documents\casadi-3.6.7-windows64-matlab2018b')
 import casadi.*
 
 % HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
@@ -82,15 +82,13 @@ for i = 1:numel(velocityRange)
     prob.set_initial(Sxf,0);
     prob.set_initial(Sxr,0);
     prob.set_initial(dpsi,0);
-%     if i>1
-%         prob.set_initial(Sxf,GG.speed(i-1).Sxf(1));
-%         prob.set_initial(Sxr,GG.speed(i-1).Sxr(1));
-%     end
+    if i>1
+        prob.set_initial(Sxf,GG.speed(i-1).Sxf(1));
+        prob.set_initial(Sxr,GG.speed(i-1).Sxr(1));
+    end
     % define constraints
-    prob.subject_to(PowerOut<=PMaxLimit);
     prob.subject_to(Mz == 0);
     prob.subject_to(ay - V*dpsi == 0);
-    % prob.subject_to(Fx<=Fxpwt);
     prob.solver('ipopt', p_opts, s_opts);
 
     % % acceleration G solver
@@ -107,10 +105,10 @@ for i = 1:numel(velocityRange)
 
     % % braking G solver
     % redefine initial guess
-%     if i>1
-%         prob.set_initial(Sxf,GG.speed(i-1).Sxf(end));
-%         prob.set_initial(Sxr,GG.speed(i-1).Sxr(end));
-%     end
+    if i>1
+        prob.set_initial(Sxf,GG.speed(i-1).Sxf(end));
+        prob.set_initial(Sxr,GG.speed(i-1).Sxr(end));
+    end
     prob.minimize(ax);
     x = prob.solve();
     minAx = x.value(ax);
@@ -123,11 +121,11 @@ for i = 1:numel(velocityRange)
     GG.speed(i).Saf(numel(velocityRange)+2) = x.value(Saf);
 
     % % equal spread ax to -ax
-    GG.speed(i).ax = [maxAx, linspace(maxAx, minAx, Gnum), minAx];
+    GG.speed(i).ax = [linspace(maxAx, minAx, Gnum), minAx];
     GG.speed(i).ay = zeros(1, numel(GG.speed(i).ax));
 
     % Lateral G Solver
-    for j = 2:numel(GG.speed(i).ax)-1
+    for j = 1:numel(GG.speed(i).ax)-1
         ax_target = GG.speed(i).ax(j);
         prob = casadi.Opti();
         % Decision Variables
@@ -140,11 +138,19 @@ for i = 1:numel(velocityRange)
         vehicle;
         % define objective
         prob.minimize(-ay); % Maximum GG Envelope Radius
-%         prob.set_initial(delta,GG.speed(i).delta(j-1));
-%         prob.set_initial(beta,GG.speed(i).beta(j-1));
-%         prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
-%         prob.set_initial(Sxr,GG.speed(i).Sxr(j-1));
-%         prob.set_initial(dpsi,GG.speed(i).dpsi(j-1));
+        % set initial guess
+        prob.set_initial(delta,0);
+        prob.set_initial(beta,0);
+        prob.set_initial(Sxf,0);
+        prob.set_initial(Sxr,0);
+        prob.set_initial(dpsi,0);
+        if j>2
+            prob.set_initial(delta,GG.speed(i).delta(j-1));
+            prob.set_initial(beta,GG.speed(i).beta(j-1));
+            prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
+            prob.set_initial(Sxr,GG.speed(i).Sxr(j-1));
+            prob.set_initial(dpsi,GG.speed(i).dpsi(j-1));
+        end
         % define constraints
         prob.subject_to(Mz == 0);
         prob.subject_to(ax == ax_target);
@@ -168,9 +174,11 @@ for i = 1:numel(velocityRange)
         catch
             GG.speed(i).ax(j) = NaN;
             GG.speed(i).ay(j) = NaN;
-            fprintf("Combined Slip Failed at V - %0.2f [m/s] & Ax - %0.2f [m/s^2] \n", V, ax_target)
+            fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
         end
     end
+    GG.speed(i).ax = [maxAx,GG.speed(i).ax];
+    GG.speed(i).ay = [0, GG.speed(i).ay];
     % store maximum ay at each speed
     GG.speed(i).aymax = max(GG.speed(i).ay);
     % 3D plot GG diagram
