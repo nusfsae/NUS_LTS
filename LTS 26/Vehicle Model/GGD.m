@@ -31,9 +31,9 @@ IA = 0; % inclination angle (rad)
 
 
 % % Bounds for Path Constraints
-maxDelta = deg2rad(25); % maximum steering angle (rad)
+maxDelta = del_max; % maximum steering angle (rad)
 maxSa = deg2rad(10);
-maxBeta = deg2rad(5);
+maxBeta = deg2rad(20);
 maxSxf = 0.1;
 maxSxr = 0.1;
 maxDpsi = deg2rad(120); % deg/s to rad/s
@@ -63,7 +63,10 @@ figure
 
 
 % % Steady State Speed Setting
-for i = 1:numel(velocityRange)
+for i = 1:numel(velocityRange)    
+    % empty array for ay
+    GG.speed(i).ay = zeros(1, Gnum+2);
+    % current iterated speed
     V = velocityRange(i);
     GG.speed(i).speed = V;
     % Maximum Forward Acceleration
@@ -120,12 +123,56 @@ for i = 1:numel(velocityRange)
     GG.speed(i).Sar(numel(velocityRange)+2) = x.value(Sar);
     GG.speed(i).Saf(numel(velocityRange)+2) = x.value(Saf);
 
+
+    % % First combine ax/ay solver
+    prob = casadi.Opti();
+    % Decision Variables
+    delta = prob.variable(); prob.subject_to(-maxDelta<=delta<=maxDelta);        % steering angle (rad)
+    beta = prob.variable(); prob.subject_to(-maxBeta<=beta<=maxBeta);            % body slip (rad)
+    Sxf = prob.variable(); prob.subject_to(-maxSxf<=Sxf<=maxSxf);                % front slip ratio
+    Sxr = prob.variable(); prob.subject_to(-maxSxr<=Sxr<=maxSxr);                % rear slip ratio
+    dpsi = prob.variable(); prob.subject_to(-maxDpsi<=dpsi<=maxDpsi);            % Yaw rate (rad/s)
+    % Call Vehicle Model
+    vehicle;
+    % objective
+    prob.minimize(-ay);
+    % set initial guess
+    prob.set_initial(delta,0);
+    prob.set_initial(beta,0);
+    prob.set_initial(Sxf,0);
+    prob.set_initial(Sxr,0);
+    prob.set_initial(dpsi,0);
+    % define constraints
+    prob.subject_to(Mz == 0);
+    prob.subject_to(ax == maxAx);
+    prob.subject_to(ay - V*dpsi == 0);
+    prob.subject_to(-maxSa<=Saf<=maxSa);
+    prob.subject_to(-maxSa<=Sar<=maxSa);
+    % optimization results
+    prob.solver('ipopt', p_opts, s_opts);
+    % security catch in case failure
+    try
+        x = prob.solve();
+        GG.speed(i).ax(2) = x.value(ax);
+        GG.speed(i).ay(2) = x.value(ay);
+        GG.speed(i).delta(2) = x.value(delta);
+        GG.speed(i).beta(2) = x.value(beta);
+        GG.speed(i).dpsi(2) = x.value(dpsi);
+        GG.speed(i).Sxf(2) = x.value(Sxf);
+        GG.speed(i).Sxr(2) = x.value(Sxr);
+        GG.speed(i).Sar(2) = x.value(Sar);
+        GG.speed(i).Saf(2) = x.value(Saf);
+    catch
+        GG.speed(i).ax(2) = NaN;
+        GG.speed(i).ay(2) = NaN;
+        fprintf("Combined Slip Failed at V - %0.2f [m/s] \n", V)
+    end
+
     % % equal spread ax to -ax
-    GG.speed(i).ax = [linspace(maxAx, minAx, Gnum), minAx];
-    GG.speed(i).ay = zeros(1, numel(GG.speed(i).ax));
+    GG.speed(i).ax = [maxAx,linspace(maxAx, minAx, Gnum), minAx];
 
     % Lateral G Solver
-    for j = 1:numel(GG.speed(i).ax)-1
+    for j = 3:numel(GG.speed(i).ax)-1
         ax_target = GG.speed(i).ax(j);
         prob = casadi.Opti();
         % Decision Variables
@@ -144,7 +191,7 @@ for i = 1:numel(velocityRange)
         prob.set_initial(Sxf,0);
         prob.set_initial(Sxr,0);
         prob.set_initial(dpsi,0);
-        if j>2
+        if j>3
             prob.set_initial(delta,GG.speed(i).delta(j-1));
             prob.set_initial(beta,GG.speed(i).beta(j-1));
             prob.set_initial(Sxf,GG.speed(i).Sxf(j-1));
@@ -177,8 +224,6 @@ for i = 1:numel(velocityRange)
             fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
         end
     end
-    GG.speed(i).ax = [maxAx,GG.speed(i).ax];
-    GG.speed(i).ay = [0, GG.speed(i).ay];
     % store maximum ay at each speed
     GG.speed(i).aymax = max(GG.speed(i).ay);
     % 3D plot GG diagram
