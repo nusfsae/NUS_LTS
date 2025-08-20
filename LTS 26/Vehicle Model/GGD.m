@@ -307,7 +307,7 @@ vmax = 35; vmin = 0;
 figure
 plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
 [vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(axmin, 0, 100));
-ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','nearest'); 
+ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary'); 
 ayq = ayBrake(vq,axq);
 hold on
 surf(ayq,axq,vq);
@@ -318,7 +318,7 @@ colorbar;
 figure
 plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
 [vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(0, axmax, 100));
-ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','nearest'); 
+ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary'); 
 ayq = ayAccel(vq,axq);
 hold on
 surf(ayq,axq,vq);

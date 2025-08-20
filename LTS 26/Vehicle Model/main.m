@@ -24,12 +24,7 @@ GGD;
 %%
 
 figure
-corner;
-
-% plot BSP
-plot(dist,sim.speed);
-
-drivebrake;
+dynamics;
 
 % plot speed profile
 hold on;plot(dist,sim.speed);
