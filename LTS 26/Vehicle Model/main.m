@@ -27,7 +27,7 @@ figure
 dynamics;
 
 % plot speed profile
-hold on;plot(dist,sim.speed);
+hold on;plot(dist,sim.speed*3.6);
 % plot ax/ay
 figure
 plot(dist,sim.ay/9.81);yyaxis left;ylabel('ay');
