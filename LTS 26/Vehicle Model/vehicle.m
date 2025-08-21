@@ -1,17 +1,19 @@
 % % Vehicle Model
 
-% % Resolve lataral and longitudinal limit
-
 % % Equations of Motions
-% Distance from CG to front axle and CG to rear
-lf = wheelbase*mass_front;
-lr = wheelbase*(1-mass_front);
+% CG location and vehicle dimensions
+a = wheelbase*mass_front;
+b = wheelbase-a;
+d = track_width;
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
-% front/rear slip angles (Milliken pg.148)
-Saf = -delta + atan((dy + lf*dpsi)/dx);
-Sar = atan((dy - lr*dpsi)/dx);
+% slip angles 4-wheel model
+% Reference --Vehicle dynamics and tire models: An overview
+Safr = -delta + atan((dy+a*dpsi)/(dx+d*dpsi/2));
+Safl = -delta + atan((dy+a*dpsi)/(dx-d*dpsi/2));
+Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2));
+Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2));
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
 Lift = 0.5*den*(V^2)*CLs*farea;
@@ -21,22 +23,33 @@ Fz = (mass*9.81+Lift)/4;
 % % Tire model
 % tire parameters
 A =1800; B =1.5; C =25; D =1; E =20;
-% pure slip
-Fxpf = A*sin(B*atan(C*Sxf));
-Fypf = -A*sin(B*atan(C*tan(Saf)));
-Fxpr = A*sin(B*atan(C*Sxr));
-Fypr = -A*sin(B*atan(C*tan(Sar)));
-% combined slip
-Fxf = Fxpf * cos(D*atan(E*tan(Saf)));
-Fyf = Fypf * cos(D*atan(E*Sxf));
-Fxr = Fxpr * cos(D*atan(E*tan(Sar)));
-Fyr = Fypr * cos(D*atan(E*Sxr));
+% front right
+Fxpfr = A*sin(B*atan(C*Sxfr));
+Fypfr = -A*sin(B*atan(C*tan(Safr)));
+Fxfr = Fxpfr * cos(D*atan(E*tan(Safr)));
+Fyfr = Fypfr * cos(D*atan(E*Sxfr));
+% front left
+Fxpfl = A*sin(B*atan(C*Sxfl));
+Fypfl = -A*sin(B*atan(C*tan(Safl)));
+Fxfl = Fxpfl * cos(D*atan(E*tan(Safl)));
+Fyfl = Fypfl * cos(D*atan(E*Sxfl));
+% rear right
+Fxprr = A*sin(B*atan(C*Sxrr));
+Fyprr = -A*sin(B*atan(C*tan(Sarr)));
+Fxrr = Fxprr * cos(D*atan(E*tan(Sarr)));
+Fyrr = Fyprr * cos(D*atan(E*Sxrr));
+% rear left
+Fxprl = A*sin(B*atan(C*Sxrl));
+Fyprl = -A*sin(B*atan(C*tan(Sarl)));
+Fxrl = Fxprl * cos(D*atan(E*tan(Sarl)));
+Fyrl = Fyprl * cos(D*atan(E*Sxrl));
+
 
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
-Fy = Fyf*cos(delta) + Fxf*sin(delta) + Fyr;
-Fx = Fxf*cos(delta) - Fyf*sin(delta) + Fxr;
-Mz = lf*(Fyf*cos(delta) + Fxf*sin(delta)) - lr*Fyr;
+Fy = (Fyfr+Fyfl)*cos(delta)+(Fyfr+Fyfl)*sin(delta)+Fyrl+Fyrr;
+Fx = (Fxfr+Fxfl)*cos(delta)-(Fyfr+Fyfl)*sin(delta)+Fxrl+Fxrr;
+Mz = (a*(Fxfr+Fxfl)*sin(delta)+a*(Fyfr+Fyfl)*cos(delta)-b*(Fyrl+Fyrr)+d*(Fxfr-Fxfl)*cos(delta)/2+d*(Fxrr-Fxrl)/2+d*(Fyfl-Fyfr)*sin(delta)/2);
 
 % % Powertrain model
 Fxpwt = 0.9*Ipeak*220*FDR/R;
