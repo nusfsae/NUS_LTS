@@ -19,7 +19,7 @@ coefficients = parameters.Tyre;
 
 % Inputs
 
-FZ0 = 1100;
+FZ0 = coefficients.Fz0;
 
 KAPPA = SlipRatio; % Slip Ratio [-]
 ALPHA = SlipAngle; % degrees to [Rad]
