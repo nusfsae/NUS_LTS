@@ -58,7 +58,7 @@ track = load('Track Model\25 Endurance.mat');
 settings.track.bContinuousLap = true;
 
 % Calculate GGV Performance Envelope
-GGV = calculateGGV(settings, GGV_settings);
+GGV = TwoWheel.calculateGGV(settings, GGV_settings);
 
 %% Run LapSim
 

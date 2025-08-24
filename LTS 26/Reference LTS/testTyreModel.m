@@ -2,7 +2,7 @@
 clear; clc;
 
 % Nominal Conditions
-settings.Tyre.p0                     = 84000        ;     
+settings.Tyre.p0  = 84000        ;  % Nominal pressure in Pa [Not used in MF5.2]   
 settings.Tyre.Fz0 = 1080; % Nominal Load in [N]              
 
 % Scaling Coefficients
