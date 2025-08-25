@@ -1,4 +1,4 @@
-function outputs = MF52(SlipRatio,SlipAngle,NormalLoad,Camber, parameters)
+function [FY, FX] = MF52(SlipRatio,SlipAngle,NormalLoad,Camber, parameters)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 11/08/2025
@@ -19,7 +19,7 @@ coefficients = parameters.Tyre;
 
 % Inputs
 
-FZ0 = 1100;
+FZ0 = coefficients.FZ0;
 
 KAPPA = SlipRatio; % Slip Ratio [-]
 ALPHA = SlipAngle; % degrees to [Rad]
@@ -160,9 +160,5 @@ EXAL = REX1 + REX2.*DFZ;
 GXAL = ( cos(CXAL.*atan(BXAL.*ALPHAS - EXAL.*(BXAL.*ALPHAS - atan(BXAL.*ALPHAS))))) ./ ( cos(CXAL.*atan(BXAL.*SHXAL - EXAL.*(BXAL.*SHXAL - atan(BXAL.*SHXAL)))));
 FX = GXAL.*FX0; % Combined Slip Slip Longitudinal Force
 
-% % Connect Outputs
-
-outputs.FY  = FY;
-outputs.FX  = FX;
 
 end

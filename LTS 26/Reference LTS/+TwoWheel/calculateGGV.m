@@ -34,7 +34,7 @@ function GGV = calculateGGV(settings, GGV_settings)
         prob.set_initial(dpsi,0);
 
         % Call Vehicle Model
-        outputs = vehicleModel(V, delta, beta, Sxf, Sxr, dpsi, settings);
+        outputs = TwoWheel.vehicleModel(V, delta, beta, Sxf, Sxr, dpsi, settings);
     
         % define constraints
         prob.subject_to(outputs.PowerOut<=settings.powertrain.powerLimit);
@@ -69,7 +69,7 @@ function GGV = calculateGGV(settings, GGV_settings)
             dpsi = prob.variable(); prob.subject_to(-settings.bounds.maxDpsi<=dpsi<=settings.bounds.maxDpsi);            % Yaw rate (rad/s)
             
             % Call Vehicle Model
-            outputs = vehicleModel(V, delta, beta, Sxf, Sxr, dpsi, settings);
+            outputs = TwoWheel.vehicleModel(V, delta, beta, Sxf, Sxr, dpsi, settings);
     
             % define objective
             prob.minimize(-outputs.ay); % Maximum GG Envelope Radius
@@ -120,9 +120,10 @@ function GGV = calculateGGV(settings, GGV_settings)
     % cornering cases i.e. very low speeds, cornering with minimal/no body
     % slip angle
 
-    % so we prefix the calculated GGV with the lowest speeds
-    GGV.vCar = [repmat(min(GGV.vCar)-5,1,GGV_settings.Gnum+2), GGV.vCar];
-    GGV.gLong = [GGV.gLong(:,1:GGV_settings.Gnum+2), GGV.gLong];
-    GGV.gLat = [GGV.gLat(:,1:GGV_settings.Gnum+2), GGV.gLat];
+    % so we prefix the calculated GGV with the lowest speeds, change to
+    % column vector
+    GGV.vCar = [repmat(min(GGV.vCar)-5,1,GGV_settings.Gnum+2), GGV.vCar]';
+    GGV.gLong = [GGV.gLong(:,1:GGV_settings.Gnum+2), GGV.gLong]';
+    GGV.gLat = [GGV.gLat(:,1:GGV_settings.Gnum+2), GGV.gLat]';
 
 end
