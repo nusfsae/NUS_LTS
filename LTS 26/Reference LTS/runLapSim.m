@@ -6,9 +6,9 @@ velocity_ub  = max(GGV.vCar); % Measured Limits - GGV
 velocity_lb  = min(GGV.vCar); % Measured Limits - GGV
 
 % Ingest GGV Data
-u   =  GGV.vCar';
-ax  =  GGV.gLong';
-ay  =  GGV.gLat';
+u   =  GGV.vCar;
+ax  =  GGV.gLong;
+ay  =  GGV.gLat;
 
 % Interpolation
 idx = (ax > 0); 

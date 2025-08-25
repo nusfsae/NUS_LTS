@@ -38,10 +38,10 @@ function outputs = vehicleModel(inputs,carData)
     w_rr = (carData.Chassis.massRear * g / 2) + (del_w_r) + longLT + (DF_rear/2);
     
     % Wheel Forces
-    [fy_fl, fx_fl] = MF52(inputs.kappa_fl,alpha_fl,w_fl,carData.Suspension.aCamberFront, carData);
-    [fy_fr, fx_fr] = MF52(inputs.kappa_fr,alpha_fr,w_fr,-carData.Suspension.aCamberFront, carData);
-    [fy_rl, fx_rl] = MF52(inputs.kappa_rl,alpha_rl,w_rl,carData.Suspension.aCamberRear, carData);
-    [fy_rr, fx_rr] = MF52(inputs.kappa_rr,alpha_rr,w_rr,-carData.Suspension.aCamberRear, carData);
+    [fy_fl, fx_fl] = Tyres.MF52(inputs.kappa_fl,alpha_fl,w_fl,carData.Suspension.aCamberFront, carData);
+    [fy_fr, fx_fr] = Tyres.MF52(inputs.kappa_fr,alpha_fr,w_fr,-carData.Suspension.aCamberFront, carData);
+    [fy_rl, fx_rl] = Tyres.MF52(inputs.kappa_rl,alpha_rl,w_rl,carData.Suspension.aCamberRear, carData);
+    [fy_rr, fx_rr] = Tyres.MF52(inputs.kappa_rr,alpha_rr,w_rr,-carData.Suspension.aCamberRear, carData);
     
     brakeBias_tyre = (fx_fl + fx_fr) / (fx_fl + fx_fr + fx_rl + fx_rr);
     power_out = ( fx_fl + fx_fr + fx_rl + fx_rr ) * inputs.Vx / 1000; % Wheel Power in kW
