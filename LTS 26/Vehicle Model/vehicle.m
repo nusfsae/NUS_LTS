@@ -47,7 +47,7 @@ Fyrl = Fyprl * cos(D*atan(E*Sxrl));
 
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
-Fy = (Fyfr+Fyfl)*cos(delta)+(Fyfr+Fyfl)*sin(delta)+Fyrl+Fyrr;
+Fy = (Fyfr+Fyfl)*cos(delta)+(Fxfr+Fxfl)*sin(delta)+Fyrl+Fyrr;
 Fx = (Fxfr+Fxfl)*cos(delta)-(Fyfr+Fyfl)*sin(delta)+Fxrl+Fxrr;
 Mz = (a*(Fxfr+Fxfl)*sin(delta)+a*(Fyfr+Fyfl)*cos(delta)-b*(Fyrl+Fyrr)+d*(Fxfr-Fxfl)*cos(delta)/2+d*(Fxrr-Fxrl)/2+d*(Fyfl-Fyfr)*sin(delta)/2);
 
