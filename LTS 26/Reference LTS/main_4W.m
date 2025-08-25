@@ -93,7 +93,7 @@ GGV_settings.velocityRange = linspace(10,settings.Powertrain.max_speed-5, GGV_se
 % Calculate GGV Envelope
 GGV = FourWheel.calculateGGV(settings, GGV_settings);
 
-% Select Track
+%% Select Track
 track = load('Track Model\25 Endurance.mat');
 settings.track.bContinuousLap = true;
 

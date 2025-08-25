@@ -15,7 +15,7 @@ fz_range = linspace(400, 1500, 4);
 
 % Pure Lateral Force
 for i = 1:numel(sa_range)
-    [FY, FX] = MF52(0, sa_range(i), fz_range(2), 0, settings);
+    [FY, FX] = Tyres.MF52(0, sa_range(i), fz_range(2), 0, settings);
     fy(i) = FY;
     fx(i) = FX;
 end
@@ -36,7 +36,7 @@ ylabel('Fx [N]')
 clear fy fx;
 
 for i = 1:numel(sx_range)
-    [FY, FX] = MF52(sx_range(i), 0, fz_range(2), 0, settings);
+    [FY, FX] = Tyres.MF52(sx_range(i), 0, fz_range(2), 0, settings);
     fy(i) = FY;
     fx(i) = FX;
 end
@@ -63,7 +63,7 @@ sa_range = X(:);
 sx_range = Y(:);
 
 for i = 1:numel(sx_range)
-    [FY, FX] = MF52(sx_range(i), sa_range(i), fz_range(2), 0, settings);
+    [FY, FX] = Tyres.MF52(sx_range(i), sa_range(i), fz_range(2), 0, settings);
     fy(i) = FY;
     fx(i) = FX;
 end
