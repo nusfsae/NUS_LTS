@@ -51,15 +51,15 @@ s_opts.print_level = 0; % 0: no display, 5: display
 
 % % Mesh Discretization
 Vnum = 30;        % number of speed variations
-Gnum = 10;        % number of combine ax/ay variations
+Gnum = 30;        % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
 
 tic
 % % Create empty performance envelope GG
 GG = struct();
 GG.speed = struct();
-figure
 %%
+figure
 
 % % Steady State Speed Setting
 for i = 1:numel(velocityRange)    
@@ -76,8 +76,8 @@ for i = 1:numel(velocityRange)
         theta = AngleRange(j);
         % call solver
         opti = casadi.Opti();
-        % Initialise Decision Variables
-        p = opti.variable(); opti.subject_to(0<=p<=10);
+        % input: decision variables
+        p = opti.variable(); opti.subject_to(0<=p<=40);
         delta = opti.variable(); opti.subject_to(-maxDelta<=delta<=maxDelta);       % steering angle (rad)
         beta = opti.variable(); opti.subject_to(-maxBeta<=beta<=maxBeta);           % body slip (rad)
         Sxfl = opti.variable(); opti.subject_to(-maxSxfl<=Sxfl<=maxSxfl);           % front left slip ratio
@@ -85,10 +85,10 @@ for i = 1:numel(velocityRange)
         Sxrl = opti.variable(); opti.subject_to(-maxSxrl<=Sxrl<=maxSxrl);           % rear left slip ratio
         Sxrr = opti.variable(); opti.subject_to(-maxSxrr<=Sxrr<=maxSxrr);           % rear right slip ratio
         dpsi = opti.variable(); opti.subject_to(-maxDpsi<=dpsi<=maxDpsi);           % Yaw rate (rad/s)
-        % additional inputs
+        % inputs: additional
         ax_in = p*sin(theta);
         ay_in = p*cos(theta);
-        % Call Vehicle Model
+        % call Vehicle Model
         vehicle;        
         % define initial guess
         opti.set_initial(delta,0);
@@ -111,7 +111,7 @@ for i = 1:numel(velocityRange)
         % optimization results
         opti.solver('ipopt', p_opts, s_opts);
         % objective
-        opti.minimize(-(ax^2+ay^2));
+        opti.minimize(-p);
         % results
         try
             x = opti.solve();
