@@ -10,8 +10,7 @@ d = track_width;
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
-% slip angles 4-wheel model
-% Reference --Vehicle dynamics and tire models: An overview
+% slip angles
 Safr = -delta + atan((dy+a*dpsi)/(dx+d*dpsi/2 + eps));
 Safl = -delta + atan((dy+a*dpsi)/(dx-d*dpsi/2 + eps));
 Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2 + eps));
@@ -19,8 +18,19 @@ Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2 + eps));
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
 Lift = 0.5*den*(V^2)*CLs*farea;
-% normal load per tire
-Fz = (mass*9.81+Lift)/4;
+AeroF = Lift*ab;
+AeroR = Lift*(1-ab);
+% normal load by mass
+Fz = (mass*9.81)/4;
+% load transfer
+latLT = Fz*ay_in*cg_h/d;
+longLT = Fz*ax_in*cg_h/wheelbase;
+% wheel loads
+Fzfl = Fz+AeroF/2-latLT-longLT;
+Fzfr = Fz+AeroF/2+latLT-longLT;
+Fzrl = Fz+AeroR/2-latLT+longLT;
+Fzrr = Fz+AeroR/2+latLT-longLT;
+
 
 % % Tire model
 % tire parameters
@@ -67,5 +77,6 @@ Fx = smoothmin(Fxpwt,Fx,alpha);
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
 ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 
-% resultant
-p = sqrt(ax^2+ay^2);
+% residual control
+ax_res = ax-ax_in;
+ay_res = ay-ay_in;

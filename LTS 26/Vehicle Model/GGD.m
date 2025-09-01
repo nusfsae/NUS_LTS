@@ -1,5 +1,6 @@
 
 addpath('C:\Users\PC5\Documents\casadi-3.6.7-windows64-matlab2018b')
+addpath(genpath(cd))
 import casadi.*
 
 % HoosierR25=mfeval.readTIR('Hoosier_18_75_10_R25B');
@@ -19,7 +20,7 @@ R = 0.2032;
 Ipeak = 1;
 wheelbase = 1.531;
 cg_h = 0.256;
-ab = 0.5310665;
+ab = 0.5310665; % aero balance (front)
 mass_front = 0.5095; % mass distribution (front heavy)
 track_width = 1.21;  % track width
 Inertia = 106;
@@ -76,6 +77,7 @@ for i = 1:numel(velocityRange)
         % call solver
         opti = casadi.Opti();
         % Initialise Decision Variables
+        p = opti.variable(); opti.subject_to(0<=p<=10);
         delta = opti.variable(); opti.subject_to(-maxDelta<=delta<=maxDelta);       % steering angle (rad)
         beta = opti.variable(); opti.subject_to(-maxBeta<=beta<=maxBeta);           % body slip (rad)
         Sxfl = opti.variable(); opti.subject_to(-maxSxfl<=Sxfl<=maxSxfl);           % front left slip ratio
@@ -83,6 +85,9 @@ for i = 1:numel(velocityRange)
         Sxrl = opti.variable(); opti.subject_to(-maxSxrl<=Sxrl<=maxSxrl);           % rear left slip ratio
         Sxrr = opti.variable(); opti.subject_to(-maxSxrr<=Sxrr<=maxSxrr);           % rear right slip ratio
         dpsi = opti.variable(); opti.subject_to(-maxDpsi<=dpsi<=maxDpsi);           % Yaw rate (rad/s)
+        % additional inputs
+        ax_in = p*sin(theta);
+        ay_in = p*cos(theta);
         % Call Vehicle Model
         vehicle;        
         % define initial guess
@@ -93,15 +98,9 @@ for i = 1:numel(velocityRange)
         opti.set_initial(Sxrl,0);
         opti.set_initial(Sxrr,0);
         opti.set_initial(dpsi,0);
-        if i>1
-            opti.set_initial(Sxfl,GG.speed(i-1).Sxfl(1));
-            opti.set_initial(Sxfr,GG.speed(i-1).Sxfr(1));
-            opti.set_initial(Sxfl,GG.speed(i-1).Sxrl(1));
-            opti.set_initial(Sxfr,GG.speed(i-1).Sxrr(1));
-        end
         % define constraints
-        opti.subject_to(ax == p*sin(theta));
-        opti.subject_to(ay == p*cos(theta));
+        opti.subject_to(ax_res ==0);
+        opti.subject_to(ay_res ==0);
         opti.subject_to(Mz == 0);
         opti.subject_to(ay - V*dpsi == 0);
         opti.solver('ipopt', p_opts, s_opts);
@@ -112,7 +111,7 @@ for i = 1:numel(velocityRange)
         % optimization results
         opti.solver('ipopt', p_opts, s_opts);
         % objective
-        opti.minimize(-p);
+        opti.minimize(-(ax^2+ay^2));
         % results
         try
             x = opti.solve();
@@ -137,7 +136,8 @@ for i = 1:numel(velocityRange)
             fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
         end
     end
-    
+    % store maximum ay at each speed
+    GG.speed(i).aymax = max(GG.speed(i).ay);
     % 3D plot GG diagram
     z = GG.speed(i).speed* ones(size(GG.speed(i).ax));  
     plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
@@ -188,13 +188,13 @@ performance.v = zeros(1,Vnum*(Gnum+2));
 performance.ax = zeros(1,Vnum*(Gnum+2));
 performance.ay = zeros(1,Vnum*(Gnum+2));
 for i = 1:Vnum
-    for j = 1:Gnum+2
+    for j = 1:Gnum
         % speed value
-        performance.v((i-1)*(Gnum+2)+j) = GG.speed(i).speed;
+        performance.v((i-1)*(Gnum)+j) = GG.speed(i).speed;
         % ay value
-        performance.ay((i-1)*(Gnum+2)+j) = GG.speed(i).ay(j);
+        performance.ay((i-1)*(Gnum)+j) = GG.speed(i).ay(j);
         % ax value
-        performance.ax((i-1)*(Gnum+2)+j) = GG.speed(i).ax(j);
+        performance.ax((i-1)*(Gnum)+j) = GG.speed(i).ax(j);
     end
 end
 % split performance envelope in half
