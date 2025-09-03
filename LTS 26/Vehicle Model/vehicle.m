@@ -4,9 +4,9 @@
 % epsilon for continuity
 eps = 1e-6;
 % CG location and vehicle dimensions
-a = wheelbase*mass_front;
+a = wheelbase*cg_f;
 b = wheelbase-a;
-d = track_width;
+d = track;
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
