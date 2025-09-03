@@ -3,7 +3,6 @@ addpath('C:\Users\PC5\Documents\casadi-3.6.7-windows64-matlab2018b')
 addpath(genpath(cd))
 import casadi.*
 
-
 % Chassis Settings
 mass = 262;                          % vehicle mass (kg)
 track = 1.21;                        % track width (m)
@@ -26,13 +25,12 @@ ab = 0.5310665;                      % aero balance (front)
 % Powertrain Settings
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.36;                          % final drive ratio (-)
-Ipeak = 1;                           % power percentage (-)
-v_min = 10;                          % minimum speed for GG calculation (m/s)
+Ipeak = 1;                           % power percentage (-)               
 v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 PMaxLimit = 80;                      % power limit (KW)
 
-
 % % Bounds for Path Constraints
+maxp = 20;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
 maxBeta = deg2rad(20);               % maximum body slip (deg)
@@ -42,16 +40,14 @@ maxSxrr = 0.1;                       % maximum rear right slip ratio (-)
 maxSxrl = 0.1;                       % maximum rear left slip ratio (-)
 maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 
-
 % % IPOPT Settings
 p_opts = struct;
 s_opts = struct;
-% opts.expand =true;
 p_opts.print_time = 0;
 s_opts.print_level = 0; % 0: no display, 5: display
 
-
 % % Mesh Discretization
+v_min = 10;       % minimum speed for GG calculation (m/s)
 Vnum = 30;        % number of speed variations
 Gnum = 30;        % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
@@ -60,6 +56,7 @@ tic
 % % Create empty performance envelope GG
 GG = struct();
 GG.speed = struct();
+
 %%
 figure
 
@@ -79,7 +76,7 @@ for i = 1:numel(velocityRange)
         % call solver
         opti = casadi.Opti();
         % input: decision variables
-        p = opti.variable(); opti.subject_to(0<=p<=40);
+        p = opti.variable(); opti.subject_to(0<=p<=maxp);                           % radius of GGD (ms^-2)
         delta = opti.variable(); opti.subject_to(-maxDelta<=delta<=maxDelta);       % steering angle (rad)
         beta = opti.variable(); opti.subject_to(-maxBeta<=beta<=maxBeta);           % body slip (rad)
         Sxfl = opti.variable(); opti.subject_to(-maxSxfl<=Sxfl<=maxSxfl);           % front left slip ratio

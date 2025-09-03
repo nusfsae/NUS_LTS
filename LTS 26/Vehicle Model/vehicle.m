@@ -1,8 +1,6 @@
 % % Vehicle Model
 
 % % Equations of Motions
-% epsilon for continuity
-eps = 1e-6;
 % CG location and vehicle dimensions
 a = wheelbase*cg_f;
 b = wheelbase-a;
@@ -11,10 +9,10 @@ d = track;
 dx = V*cos(beta);
 dy = V*sin(beta);
 % slip angles
-Safr = -delta + atan((dy+a*dpsi)/(dx+d*dpsi/2 + eps));
-Safl = -delta + atan((dy+a*dpsi)/(dx-d*dpsi/2 + eps));
-Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2 + eps));
-Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2 + eps));
+Safr = -delta + atan((dy+a*dpsi)/(dx+d*dpsi/2));
+Safl = -delta + atan((dy+a*dpsi)/(dx-d*dpsi/2));
+Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2));
+Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2));
 % aerodynamics
 Drag = 0.5*den*(V^2)*CDs*farea;
 Lift = 0.5*den*(V^2)*CLs*farea;
