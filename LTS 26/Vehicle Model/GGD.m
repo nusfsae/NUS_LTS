@@ -14,6 +14,8 @@ del_max = 0.565;                     % maximum steering angle (rad)
 R = 0.2032;                          % wheel radius (m)
 P = 9;                               % tire pressue (psi)
 IA = 0;                              % inclination angle (rad)
+% Tyre Settings
+para = H1675;                        % tire selection
 % Aerodynamics Settings
 den = 1.196;                         % air density (kgm^-3)
 farea = 1.157757;                    % frontel area (m^2)
@@ -30,7 +32,7 @@ v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 PMaxLimit = 80;                      % power limit (KW)
 
 % % Bounds for Path Constraints
-maxp = 20;                           % maximum radius of GG diagram (m/s^2)
+maxp = 30;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
 maxBeta = deg2rad(20);               % maximum body slip (deg)
@@ -143,18 +145,6 @@ for i = 1:numel(velocityRange)
     hold on
 end
 
-%% Smaller/Cleaner GGV Array
-
-GGV = struct;
-
-% Get Car Forward Velocity into an array that is inline with collapsed
-% acceleration array
-vCar = repmat([GG.speed.speed],Gnum+2,1);
-vCar = vCar(:);
-
-GGV.vCar = vCar';
-GGV.gLong = [GG.speed.ax];
-GGV.gLat = [GG.speed.ay];
 
 %%
 % % Performance Envelope for maximum cornering G
@@ -181,11 +171,11 @@ PerfEnv =spline(performance.radius,performance.speed);
 
 
 %%
-% % Split performace envelope into Accel and Brake
+
 % Empty 3xN array for [speed,ay,ax]
-performance.v = zeros(1,Vnum*(Gnum+2));
-performance.ax = zeros(1,Vnum*(Gnum+2));
-performance.ay = zeros(1,Vnum*(Gnum+2));
+performance.v = zeros(1,Vnum*(Gnum));
+performance.ax = zeros(1,Vnum*(Gnum));
+performance.ay = zeros(1,Vnum*(Gnum));
 for i = 1:Vnum
     for j = 1:Gnum
         % speed value
@@ -196,15 +186,19 @@ for i = 1:Vnum
         performance.ax((i-1)*(Gnum)+j) = GG.speed(i).ax(j);
     end
 end
-% split performance envelope in half
+% split performance envelope in accel and brake
 accel = struct(); brake = struct();
 idxpos = performance.ax>=0;
 idxneg = performance.ax<0;
 accel.ax = performance.ax(idxpos);accel.ay = performance.ay(idxpos);accel.v = performance.v(idxpos);
 brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = performance.v(idxneg);
 
-
-
+%%
+% delete entries with NaN speed value
+idx = find(isnan(accel.v));
+accel.ax(idx) =[]; accel.ay(idx) =[]; accel.v(idx) =[]; 
+idx = find(isnan(brake.v));
+brake.ax(idx) =[]; brake.ay(idx) =[]; brake.v(idx) =[];
 %%
 
 % % 3D interpolate Performance Envelope
@@ -213,7 +207,7 @@ axmax = max(accel.ax);
 axmin = min(brake.ax);
 aymax = max([accel.ay(:);brake.ax(:)]);
 aymin = min([accel.ay(:);brake.ay(:)]);
-vmax = 35; vmin = 0;  
+vmax = v_max; vmin = 0;  
 % deceleration
 figure
 plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');

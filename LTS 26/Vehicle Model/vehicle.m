@@ -21,38 +21,18 @@ AeroR = Lift*(1-ab);
 % normal load by mass
 Fz = (mass*9.81)/4;
 % load transfer
-latLT = Fz*ay_in*cg_h/d;
-longLT = Fz*ax_in*cg_h/wheelbase;
+latLT = Fz*(ay_in/9.81)*cg_h/d;
+longLT = Fz*(ax_in/9.81)*cg_h/wheelbase;
 % wheel loads
 Fzfl = Fz+AeroF/2-latLT-longLT;
 Fzfr = Fz+AeroF/2+latLT-longLT;
 Fzrl = Fz+AeroR/2-latLT+longLT;
 Fzrr = Fz+AeroR/2+latLT-longLT;
-
-
-% % Tire model
-% tire parameters
-A =1800; B =1.5; C =25; D =1; E =20;
-% front right
-Fxpfr = A*sin(B*atan(C*Sxfr));
-Fypfr = -A*sin(B*atan(C*tan(Safr)));
-Fxfr = Fxpfr * cos(D*atan(E*tan(Safr)));
-Fyfr = Fypfr * cos(D*atan(E*Sxfr));
-% front left
-Fxpfl = A*sin(B*atan(C*Sxfl));
-Fypfl = -A*sin(B*atan(C*tan(Safl)));
-Fxfl = Fxpfl * cos(D*atan(E*tan(Safl)));
-Fyfl = Fypfl * cos(D*atan(E*Sxfl));
-% rear right
-Fxprr = A*sin(B*atan(C*Sxrr));
-Fyprr = -A*sin(B*atan(C*tan(Sarr)));
-Fxrr = Fxprr * cos(D*atan(E*tan(Sarr)));
-Fyrr = Fyprr * cos(D*atan(E*Sxrr));
-% rear left
-Fxprl = A*sin(B*atan(C*Sxrl));
-Fyprl = -A*sin(B*atan(C*tan(Sarl)));
-Fxrl = Fxprl * cos(D*atan(E*tan(Sarl)));
-Fyrl = Fyprl * cos(D*atan(E*Sxrl));
+% tire forces
+[Fyfr,Fxfr] = MF52(Sxfr,Safr,Fzfr,IA,para);
+[Fyfl,Fxfl] = MF52(Sxfl,Safl,Fzfl,IA,para);
+[Fyrl,Fxrl] = MF52(Sxrl,Sarl,Fzrl,IA,para);
+[Fyrr,Fxrr] = MF52(Sxrr,Sarr,Fzrr,IA,para);
 
 
 % % Equations of Motions
