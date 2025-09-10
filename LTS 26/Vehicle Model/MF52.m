@@ -19,6 +19,8 @@ coefficients = parameters.Tyre;
 
 % Inputs
 
+cf = 0.55;     % grip factor
+
 FZ0 = coefficients.FZ0;
 
 KAPPA = SlipRatio; % Slip Ratio [-]
@@ -46,8 +48,8 @@ LXAL    =   coefficients.LXAL;
 
 LKY     =   coefficients.LKY; % 1
 LKX     =   coefficients.LKX; %  0.7
-LMUY    =   coefficients.LMUY; % 0.38 Changed to Fit
-LMUX    =   coefficients.LMUX; % 0.25 Changed to Fit
+LMUY    =   cf*coefficients.LMUY; % 0.38 Changed to Fit
+LMUX    =   cf*coefficients.LMUX; % 0.25 Changed to Fit
 
 % Longitudinal Coefficients
 PCX1    =   coefficients.PCX1;

@@ -18,7 +18,7 @@ sim.accel = zeros(num,1);
 sim.brake = zeros(num,1);
 sim.throttle = zeros(num,1);
 
-% run simulation
+%% run performance envelope
 GGD;
 
 %%
