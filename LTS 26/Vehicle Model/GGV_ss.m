@@ -39,13 +39,19 @@ maxSxfr = 0.1;                       % maximum front right slip ratio (-)
 maxSxfl = 0.1;                       % maximum front left slip ratio (-)
 maxSxrr = 0.1;                       % maximum rear right slip ratio (-)
 maxSxrl = 0.1;                       % maximum rear left slip ratio (-)
-maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
+maxDpsi = deg2rad(90);              % maximum yaw rate (deg/s)
 
 % % IPOPT Settings
-p_opts = struct;
-s_opts = struct;
-p_opts.print_time = 0;
-s_opts.print_level = 5; % 0: no display, 5: display
+opts = struct();
+opts.print_time = false;
+opts.ipopt.print_level = 5;
+opts.ipopt.tol = 1e-6;
+opts.ipopt.acceptable_tol = 1e-4;           
+opts.ipopt.acceptable_iter = 15;
+opts.ipopt.max_iter = 3000;
+% opts.ipopt.mu_strategy = 'adaptive';
+% opts.ipopt.linear_solver = 'ma57';
+% opts.ipopt.hessian_approximation = 'limited-memory';
 
 % % Mesh Discretization
 Gnum = 20;       
@@ -58,7 +64,7 @@ GG = struct();
 figure
 
 % % Steady State Speed Setting
-V = 10; 
+V = 15; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -106,13 +112,12 @@ for j = 1:numel(AngleRange)
     opti.subject_to(ay_res ==0);
     opti.subject_to(Mz == 0);
     opti.subject_to(ay - V*dpsi == 0);
-    opti.solver('ipopt', p_opts, s_opts);
     opti.subject_to(-maxSa<=Safl<=maxSa);
     opti.subject_to(-maxSa<=Safr<=maxSa);
     opti.subject_to(-maxSa<=Sarl<=maxSa);
     opti.subject_to(-maxSa<=Sarr<=maxSa);
     % optimization results
-    opti.solver('ipopt', p_opts, s_opts);
+    opti.solver('ipopt', opts);
     % objective
     opti.minimize(-p);
     % results

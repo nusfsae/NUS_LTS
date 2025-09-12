@@ -32,7 +32,7 @@ v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 PMaxLimit = 80;                      % power limit (KW)
 
 % % Bounds for Path Constraints
-maxp = 50;                           % maximum radius of GG diagram (m/s^2)
+maxp = 100;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
 maxBeta = deg2rad(20);               % maximum body slip (deg)
@@ -43,10 +43,14 @@ maxSxrl = 0.1;                       % maximum rear left slip ratio (-)
 maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 
 % % IPOPT Settings
-p_opts = struct;
-s_opts = struct;
-p_opts.print_time = 0;
-s_opts.print_level = 0; % 0: no display, 5: display
+opts = struct();
+opts.print_time = false;
+opts.ipopt.print_level = 5;
+opts.ipopt.tol = 1e-6;
+opts.ipopt.acceptable_tol = 1e-4;           
+opts.ipopt.acceptable_iter = 15;
+opts.ipopt.max_iter = 3000;
+
 
 % % Mesh Discretization
 v_min = 10;       % minimum speed for GG calculation (m/s)
@@ -114,13 +118,12 @@ for i = 1:numel(velocityRange)
         opti.subject_to(ay_res ==0);
         opti.subject_to(Mz == 0);
         opti.subject_to(ay - V*dpsi == 0);
-        opti.solver('ipopt', p_opts, s_opts);
         opti.subject_to(-maxSa<=Safl<=maxSa);
         opti.subject_to(-maxSa<=Safr<=maxSa);
         opti.subject_to(-maxSa<=Sarl<=maxSa);
         opti.subject_to(-maxSa<=Sarr<=maxSa);
         % optimization results
-        opti.solver('ipopt', p_opts, s_opts);
+        opti.solver('ipopt', opts);
         % objective
         opti.minimize(-p);
         % results
