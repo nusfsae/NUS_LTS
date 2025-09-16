@@ -19,16 +19,23 @@ sim.brake = zeros(num,1);
 sim.throttle = zeros(num,1);
 
 %% run performance envelope
-GGD;
+GGV;
 
-%%
-
-figure
+%% dynamic simulation
 dynamics;
 
-% plot speed profile
-hold on;plot(dist,sim.speed*3.6);
-% plot ax/ay
+%% plotting
+
 figure
-plot(dist,sim.ay/9.81);yyaxis left;ylabel('ay');
-hold on; plot(dist,sim.ax/9.81);yyaxis right;ylabel('ax');
+
+tiledlayout(3,1);
+nexttile;
+% plot speed profile
+plot(dist,sim.speed*3.6);ylabel('speed (km/h)');
+% plot ax/ay
+nexttile
+plot(dist,sim.ay/9.81);ylabel('ay (G)');
+nexttile
+plot(dist,sim.ax/9.81);ylabel('ax (G)');
+xlabel('distance(m)');
+

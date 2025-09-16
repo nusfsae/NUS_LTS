@@ -67,3 +67,17 @@ for i = 1:length(C2)-1
 end
 sim.ax(length(C2)) =sim.ax(length(C2)-1);
 sim.ay(length(C2)) =sim.ay(length(C2)-1);
+
+%% store yaw rate
+for i = 1:length(C2)-1
+    sim.ay(i) =ay;
+    % different drive/brake
+    ax = axBrake(v,ay);
+    sim.ax(i) =ax;
+    if sim.speed(i+1)>sim.speed(i)
+        ax = axAccel(v,ay);
+        sim.ax(i) =ax;
+    end
+end
+sim.ax(length(C2)) =sim.ax(length(C2)-1);
+sim.ay(length(C2)) =sim.ay(length(C2)-1);

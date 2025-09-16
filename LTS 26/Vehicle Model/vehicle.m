@@ -34,7 +34,6 @@ Fzrr = Fz+AeroR/2+latLT-longLT;
 [Fyrl,Fxrl] = MF52(Sxrl,Sarl,Fzrl,IA,para);
 [Fyrr,Fxrr] = MF52(Sxrr,Sarr,Fzrr,IA,para);
 
-
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
 Fy = (Fyfr+Fyfl)*cos(delta)+(Fxfr+Fxfl)*sin(delta)+Fyrl+Fyrr;
