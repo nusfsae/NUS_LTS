@@ -27,12 +27,12 @@ ab = 0.5310665;                      % aero balance (front)
 % Powertrain Settings
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.36;                          % final drive ratio (-)
-Ipeak = 1;                           % power percentage (-)               
+Ipeak = 1;                           % power percentage (-)
 v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 PMaxLimit = 80;                      % power limit (KW)
 
 % % Bounds for Path Constraints
-maxp = 100;                           % maximum radius of GG diagram (m/s^2)
+maxp = 30;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
 maxBeta = deg2rad(20);               % maximum body slip (deg)
@@ -47,7 +47,7 @@ opts = struct();
 opts.print_time = false;
 opts.ipopt.print_level = 5;
 opts.ipopt.tol = 1e-6;
-opts.ipopt.acceptable_tol = 1e-4;           
+opts.ipopt.acceptable_tol = 1e-4;
 opts.ipopt.acceptable_iter = 15;
 opts.ipopt.max_iter = 3000;
 
@@ -67,7 +67,7 @@ GG.speed = struct();
 figure
 
 % % Steady State Speed Setting
-for i = 1:numel(velocityRange)    
+for i = 1:numel(velocityRange)
     % empty array for ay
     GG.speed(i).ay = zeros(1, Gnum);
     % current iterated speed
@@ -94,7 +94,7 @@ for i = 1:numel(velocityRange)
         ax_in = p*sin(theta);
         ay_in = p*cos(theta);
         % call Vehicle Model
-        vehicle;        
+        vehicle;
         % define initial guess
         opti.set_initial(delta,0);
         opti.set_initial(beta,0);
@@ -106,7 +106,6 @@ for i = 1:numel(velocityRange)
         % closer initial guess
         if j>1
             opti.set_initial(delta,GG.speed(i).delta(j-1));
-            opti.set_initial(beta,GG.speed(i).beta(j-1));
             opti.set_initial(Sxfl,GG.speed(i).Sxfl(j-1));
             opti.set_initial(Sxfr,GG.speed(i).Sxfr(j-1));
             opti.set_initial(Sxrl,GG.speed(i).Sxrl(j-1));
@@ -117,11 +116,23 @@ for i = 1:numel(velocityRange)
         opti.subject_to(ax_res ==0);
         opti.subject_to(ay_res ==0);
         opti.subject_to(Mz == 0);
-        opti.subject_to(ay - V*dpsi == 0);
+        opti.subject_to( ay-V*dpsi == 0);
         opti.subject_to(-maxSa<=Safl<=maxSa);
         opti.subject_to(-maxSa<=Safr<=maxSa);
         opti.subject_to(-maxSa<=Sarl<=maxSa);
         opti.subject_to(-maxSa<=Sarr<=maxSa);
+        opti.subject_to(Fx<=Fxpwt);
+        min_Fz = 0;  % Minimum normal force (N)
+        opti.subject_to(Fzfl >= min_Fz);
+        opti.subject_to(Fzfr >= min_Fz);
+        opti.subject_to(Fzrl >= min_Fz);
+        opti.subject_to(Fzrr >= min_Fz);
+        % Speed-dependent initial guess
+        if V > 20
+            opti.set_initial(p, maxp*0.3);  % Conservative initial guess
+        else
+            opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
+        end
         % optimization results
         opti.solver('ipopt', opts);
         % objective
@@ -147,13 +158,26 @@ for i = 1:numel(velocityRange)
         catch
             GG.speed(i).ax(j) = NaN;
             GG.speed(i).ay(j) = NaN;
+            GG.speed(i).delta(j) = GG.speed(i).delta(j-1);
+            GG.speed(i).beta(j) = GG.speed(i).beta(j-1);
+            GG.speed(i).dpsi(j) = GG.speed(i).dpsi(j-1);
+            % slip ratio
+            GG.speed(i).Sxfl(j) = GG.speed(i).Sxfl(j-1);
+            GG.speed(i).Sxfr(j) = GG.speed(i).Sxfr(j-1);
+            GG.speed(i).Sxrl(j) = GG.speed(i).Sxrl(j-1);
+            GG.speed(i).Sxrr(j) = GG.speed(i).Sxrr(j-1);
+            % slip angle
+            GG.speed(i).Safl(j) = GG.speed(i).Safl(j-1);
+            GG.speed(i).Safr(j) = GG.speed(i).Safr(j-1);
+            GG.speed(i).Sarl(j) = GG.speed(i).Sarl(j-1);
+            GG.speed(i).Sarr(j) = GG.speed(i).Sarr(j-1);
             fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
         end
     end
     % store maximum ay at each speed
     GG.speed(i).aymax = max(GG.speed(i).ay);
     % 3D plot GG diagram
-    z = GG.speed(i).speed* ones(size(GG.speed(i).ax));  
+    z = GG.speed(i).speed* ones(size(GG.speed(i).ax));
     plot3(GG.speed(i).ay, GG.speed(i).ax, z, 'LineWidth', 1.5)
     hold on
 end
@@ -209,7 +233,7 @@ brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = pe
 %%
 % delete entries with NaN speed value
 idx = find(isnan(accel.v));
-accel.ax(idx) =[]; accel.ay(idx) =[]; accel.v(idx) =[]; 
+accel.ax(idx) =[]; accel.ay(idx) =[]; accel.v(idx) =[];
 idx = find(isnan(brake.v));
 brake.ax(idx) =[]; brake.ay(idx) =[]; brake.v(idx) =[];
 %%
@@ -220,12 +244,12 @@ axmax = max(accel.ax);
 axmin = min(brake.ax);
 aymax = max([accel.ay(:);brake.ax(:)]);
 aymin = min([accel.ay(:);brake.ay(:)]);
-vmax = v_max; vmin = 0;  
+vmax = v_max; vmin = 0;
 % deceleration
 figure
 plot3(brake.ay(:),brake.ax(:),brake.v(:),'.');
 [vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(axmin, 0, 100));
-ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary'); 
+ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary');
 ayq = ayBrake(vq,axq);
 hold on
 surf(ayq,axq,vq);
@@ -236,7 +260,7 @@ colorbar;
 figure
 plot3(accel.ay(:),accel.ax(:),accel.v(:),'.');
 [vq,axq]=meshgrid(linspace(vmin, vmax, 100), linspace(0, axmax, 100));
-ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary'); 
+ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary');
 ayq = ayAccel(vq,axq);
 hold on
 surf(ayq,axq,vq);
@@ -250,9 +274,9 @@ colorbar;
 % interpolate performance envelope
 axAccel =scatteredInterpolant(accel.v(:),accel.ay(:),accel.ax(:),'natural','boundary');
 ayAccel =scatteredInterpolant(accel.v(:),accel.ax(:),accel.ay(:),'natural','boundary');
-vAccel =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','boundary');    
+vAccel =scatteredInterpolant(accel.ax(:),accel.ay(:),accel.v(:),'natural','boundary');
 axBrake =scatteredInterpolant(brake.v(:),brake.ay(:),brake.ax(:),'natural','boundary');
 ayBrake =scatteredInterpolant(brake.v(:),brake.ax(:),brake.ay(:),'natural','boundary');
-vBrake =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','boundary');    
+vBrake =scatteredInterpolant(brake.ax(:),brake.ay(:),brake.v(:),'natural','boundary');
 
 toc

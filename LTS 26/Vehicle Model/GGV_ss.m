@@ -31,7 +31,7 @@ v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 PMaxLimit = 80;                      % power limit (KW)
 
 % % Bounds for Path Constraints
-maxp = 100;                           % maximum radius of GG diagram (m/s^2)
+maxp = 30;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
 maxBeta = deg2rad(20);               % maximum body slip (deg)
@@ -39,7 +39,7 @@ maxSxfr = 0.1;                       % maximum front right slip ratio (-)
 maxSxfl = 0.1;                       % maximum front left slip ratio (-)
 maxSxrr = 0.1;                       % maximum rear right slip ratio (-)
 maxSxrl = 0.1;                       % maximum rear left slip ratio (-)
-maxDpsi = deg2rad(90);              % maximum yaw rate (deg/s)
+maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 
 % % IPOPT Settings
 opts = struct();
@@ -49,9 +49,6 @@ opts.ipopt.tol = 1e-6;
 opts.ipopt.acceptable_tol = 1e-4;           
 opts.ipopt.acceptable_iter = 15;
 opts.ipopt.max_iter = 3000;
-% opts.ipopt.mu_strategy = 'adaptive';
-% opts.ipopt.linear_solver = 'ma57';
-% opts.ipopt.hessian_approximation = 'limited-memory';
 
 % % Mesh Discretization
 Gnum = 20;       
@@ -64,7 +61,7 @@ GG = struct();
 figure
 
 % % Steady State Speed Setting
-V = 15; 
+V = 11; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -100,7 +97,6 @@ for j = 1:numel(AngleRange)
     % closer initial guess
     if j>1
         opti.set_initial(delta,GG.delta(j-1));
-        opti.set_initial(beta,GG.beta(j-1));
         opti.set_initial(Sxfl,GG.Sxfl(j-1));
         opti.set_initial(Sxfr,GG.Sxfr(j-1));
         opti.set_initial(Sxrl,GG.Sxrl(j-1));
@@ -111,11 +107,23 @@ for j = 1:numel(AngleRange)
     opti.subject_to(ax_res ==0);
     opti.subject_to(ay_res ==0);
     opti.subject_to(Mz == 0);
-    opti.subject_to(ay - V*dpsi == 0);
+    opti.subject_to( ay-V*dpsi == 0);
     opti.subject_to(-maxSa<=Safl<=maxSa);
     opti.subject_to(-maxSa<=Safr<=maxSa);
     opti.subject_to(-maxSa<=Sarl<=maxSa);
     opti.subject_to(-maxSa<=Sarr<=maxSa);
+    opti.subject_to(Fx<=Fxpwt);
+    min_Fz = 0;  % Minimum normal force (N)
+    opti.subject_to(Fzfl >= min_Fz);
+    opti.subject_to(Fzfr >= min_Fz);
+    opti.subject_to(Fzrl >= min_Fz);
+    opti.subject_to(Fzrr >= min_Fz);
+    % Speed-dependent initial guess
+    if V > 20 
+        opti.set_initial(p, maxp*0.3);  % Conservative initial guess
+    else
+        opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
+    end
     % optimization results
     opti.solver('ipopt', opts);
     % objective

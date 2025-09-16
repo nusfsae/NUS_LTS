@@ -7,7 +7,11 @@
 para = H1675;
 mass = 199.7+66+500;
 SR = 0;
-Fz = mass*9.81/4;
+den =1;
+V = 30;
+CLs = 4;
+farea = 1;
+Fz = mass*9.81/4 + 0.5*den*(V^2)*CLs*farea/4;
 IA = 0;
 
 % Fy vs SA (1-15deg)
