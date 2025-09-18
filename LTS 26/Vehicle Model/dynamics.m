@@ -53,10 +53,6 @@ end
 for i = 1:length(C2)-1
     % turn radius of current point
     radius = 1/C2(i);
-    % calculate kinematics
-    v = sim.speed(i);
-    ay = v^2/radius;
-    sim.ay(i) =ay;
     % different drive/brake
     ax = axBrake(v,ay);
     sim.ax(i) =ax;
@@ -65,19 +61,6 @@ for i = 1:length(C2)-1
         sim.ax(i) =ax;
     end
 end
+sim.ay = C2'.*sim.speed.^2;
 sim.ax(length(C2)) =sim.ax(length(C2)-1);
-sim.ay(length(C2)) =sim.ay(length(C2)-1);
 
-%% store yaw rate
-for i = 1:length(C2)-1
-    sim.ay(i) =ay;
-    % different drive/brake
-    ax = axBrake(v,ay);
-    sim.ax(i) =ax;
-    if sim.speed(i+1)>sim.speed(i)
-        ax = axAccel(v,ay);
-        sim.ax(i) =ax;
-    end
-end
-sim.ax(length(C2)) =sim.ax(length(C2)-1);
-sim.ay(length(C2)) =sim.ay(length(C2)-1);

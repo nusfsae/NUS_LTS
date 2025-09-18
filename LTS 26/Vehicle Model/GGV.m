@@ -1,35 +1,6 @@
+%% generate full performance envelope under each speed
 
-addpath('C:\Users\PC5\Documents\casadi-3.6.7-windows64-matlab2018b')
-addpath(genpath(cd))
 import casadi.*
-
-% Chassis Settings
-mass = 262;                          % vehicle mass (kg)
-track = 1.21;                        % track width (m)
-cg_f = 0.5095;                       % mass bias to front (-)
-wheelbase = 1.531;                   % wheelbase (m)
-cg_h = 0.256;                        % CG height (m)
-% Suspension Settings
-del_max = 0.565;                     % maximum steering angle (rad)
-R = 0.2032;                          % wheel radius (m)
-P = 9;                               % tire pressue (psi)
-IA = 0;                              % inclination angle (rad)
-% Tyre Settings
-para = H1675;                        % tire selection
-% Aerodynamics Settings
-den = 1.196;                         % air density (kgm^-3)
-farea = 1.157757;                    % frontel area (m^2)
-CLc = 3.782684;                      % CL cornering
-CDc = 1.410518;                      % CD cornering
-CLs = 4.116061;                      % CL straight line
-CDs = 1.54709;                       % CD cornering
-ab = 0.5310665;                      % aero balance (front)
-% Powertrain Settings
-max_rpm = 5500;                      % maximum wheel speed (rpm)
-FDR = 3.36;                          % final drive ratio (-)
-Ipeak = 1;                           % power percentage (-)
-v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
-PMaxLimit = 80;                      % power limit (KW)
 
 % % Bounds for Path Constraints
 maxp = 20;                           % maximum radius of GG diagram (m/s^2)
@@ -53,18 +24,19 @@ opts.ipopt.max_iter = 3000;
 
 
 % % Mesh Discretization
-v_min = 10;       % minimum speed for GG calculation (m/s)
-Vnum = 30;        % number of speed variations
-Gnum = 20;        % number of combine ax/ay variations
+v_min = 10;                          % minimum speed for GG calculation (m/s)
+v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
+Vnum = 30;                           % number of speed variations
+Gnum = 20;                           % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
 
 tic
+
 % % Create empty performance envelope GG
 GG = struct();
 GG.speed = struct();
 
 %%
-figure
 
 % % Steady State Speed Setting
 for i = 1:numel(velocityRange)
