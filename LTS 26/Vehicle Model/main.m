@@ -37,7 +37,7 @@ CDs = 1.54709;                       % CD straight line
 ab = 0.5310665;                      % aero balance (front)
 % Powertrain Settings
 max_rpm = 5500;                      % maximum wheel speed (rpm)
-FDR = 3.36;                          % final drive ratio (-)
+FDR = 3.00;                          % final drive ratio (-)
 Ipeak = 1;                           % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
