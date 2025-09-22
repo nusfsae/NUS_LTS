@@ -130,20 +130,37 @@ for i = 1:numel(velocityRange)
         catch
             GG.speed(i).ax(j) = NaN;
             GG.speed(i).ay(j) = NaN;
-            GG.speed(i).delta(j) = GG.speed(i).delta(j-1);
-            GG.speed(i).beta(j) = GG.speed(i).beta(j-1);
-            GG.speed(i).dpsi(j) = GG.speed(i).dpsi(j-1);
-            % slip ratio
-            GG.speed(i).Sxfl(j) = GG.speed(i).Sxfl(j-1);
-            GG.speed(i).Sxfr(j) = GG.speed(i).Sxfr(j-1);
-            GG.speed(i).Sxrl(j) = GG.speed(i).Sxrl(j-1);
-            GG.speed(i).Sxrr(j) = GG.speed(i).Sxrr(j-1);
-            % slip angle
-            GG.speed(i).Safl(j) = GG.speed(i).Safl(j-1);
-            GG.speed(i).Safr(j) = GG.speed(i).Safr(j-1);
-            GG.speed(i).Sarl(j) = GG.speed(i).Sarl(j-1);
-            GG.speed(i).Sarr(j) = GG.speed(i).Sarr(j-1);
-            fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+            if j >1
+                GG.speed(i).delta(j) = GG.speed(i).delta(j-1);
+                GG.speed(i).beta(j) = GG.speed(i).beta(j-1);
+                GG.speed(i).dpsi(j) = GG.speed(i).dpsi(j-1);
+                % slip ratio
+                GG.speed(i).Sxfl(j) = GG.speed(i).Sxfl(j-1);
+                GG.speed(i).Sxfr(j) = GG.speed(i).Sxfr(j-1);
+                GG.speed(i).Sxrl(j) = GG.speed(i).Sxrl(j-1);
+                GG.speed(i).Sxrr(j) = GG.speed(i).Sxrr(j-1);
+                % slip angle
+                GG.speed(i).Safl(j) = GG.speed(i).Safl(j-1);
+                GG.speed(i).Safr(j) = GG.speed(i).Safr(j-1);
+                GG.speed(i).Sarl(j) = GG.speed(i).Sarl(j-1);
+                GG.speed(i).Sarr(j) = GG.speed(i).Sarr(j-1);
+                fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+            else
+                GG.speed(i).delta(j) = 0;
+                GG.speed(i).beta(j) = 0;
+                GG.speed(i).dpsi(j) = 0;
+                % slip ratio
+                GG.speed(i).Sxfl(j) = 0;
+                GG.speed(i).Sxfr(j) = 0;
+                GG.speed(i).Sxrl(j) = 0;
+                GG.speed(i).Sxrr(j) = 0;
+                % slip angle
+                GG.speed(i).Safl(j) = 0;
+                GG.speed(i).Safr(j) = 0;
+                GG.speed(i).Sarl(j) = 0;
+                GG.speed(i).Sarr(j) = 0;
+                fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+            end
         end
     end
     % store maximum ay at each speed
