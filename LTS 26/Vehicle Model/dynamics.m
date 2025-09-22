@@ -53,6 +53,10 @@ end
 for i = 1:length(C2)-1
     % turn radius of current point
     radius = 1/C2(i);
+    % calculate kinematics
+    v = sim.speed(i);
+    ay = v^2/radius;
+    sim.ay(i) =ay;
     % different drive/brake
     ax = axBrake(v,ay);
     sim.ax(i) =ax;
