@@ -9,7 +9,7 @@
 clear
 
 %% load files
-addpath('C:\Users\PC5\Documents\casadi-3.6.7-windows64-matlab2018b')
+addpath('C:\Users\Patri\casadi-3.6.7-windows64-matlab2018b')
 addpath(genpath(cd))
 
 %% enter settings:
@@ -38,7 +38,7 @@ ab = 0.5310665;                      % aero balance (front)
 % Powertrain Settings
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.00;                          % final drive ratio (-)
-Ipeak = 1;                           % power percentage (-)
+Ipeak = 0.5;                         % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
 load('25 Endurance.mat');
