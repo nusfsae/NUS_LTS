@@ -12,7 +12,10 @@ for i = 1:length(C2)
         sim.speed(i,1) = vy;  
     end
 end
-
+% check rolling start
+if static == true
+    sim.speed(1) = 0;
+end
 % accelerate
 for i = 1:length(C2)-1
     % turn radius of current point
@@ -31,7 +34,7 @@ for i = 1:length(C2)-1
     end
 end
 % brake
-for i = 2:length(C2)
+for i = length(C2):-1:2
     % turn radius of current point
     radius = abs(1/C2(i));
     % distance to the next point
@@ -41,30 +44,25 @@ for i = 2:length(C2)
     ay = v0^2/radius;
     % available longitudinal deceleraton
     ax = axBrake(v0,ay);
-    v = sqrt(v0^2-2*ax*distance);
+    v = sqrt(v0^2-2*ax*distance);  % take note ax is a negative value
     % replace speed value if below boundary
     if v<=sim.speed(i-1)
         sim.speed(i-1)=v;
     end
 end
-
-
 % % store ax/ay
-for i = 1:length(C2)-1
-    % turn radius of current point
-    radius = 1/C2(i);
-    % calculate kinematics
-    v = sim.speed(i);
-    ay = v^2/radius;
-    sim.ay(i) =ay;
-    % different drive/brake
-    ax = axBrake(v,ay);
-    sim.ax(i) =ax;
-    if sim.speed(i+1)>sim.speed(i)
-        ax = axAccel(v,ay);
-        sim.ax(i) =ax;
-    end
-end
+% calculate ay
 sim.ay = C2'.*sim.speed.^2;
-sim.ax(length(C2)) =sim.ax(length(C2)-1);
+% calculate ax
+for i = 1:length(C2)-1
+    v0 = sim.speed(i);
+    v1 = sim.speed(i+1);
+    sim.ax(i) = (v1^2-v0^2)/(2*(dist(i+1)-dist(i)));
+end
+% acceleration at end point
+if static == true
+    sim.ax(end) = axAccel(sim.speed(end),sim.ay(end));
+else 
+    sim.ax(end) = (sim.speed(1)^2-sim.speed(end)^2)/(2*dist(end));
+end
 

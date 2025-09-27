@@ -42,6 +42,8 @@ Ipeak = 0.5;                         % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
 load('25 Endurance.mat');
+% Rolling/Standing start
+static = false;
 
 figure
 
@@ -67,7 +69,10 @@ dynamics;
 % calculate yaw rate
 sim.yaw = sim.ay./sim.speed;
 % calculate lap time
-dt = 1./sim.speed;
+dt = 1./max(sim.speed,0.001);
+if sim.speed(1) == 0
+    dt(1) = 0;
+end
 t = cumtrapz(dist,dt);
 laptime = t(end);
 
