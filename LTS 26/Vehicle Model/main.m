@@ -69,8 +69,8 @@ t = cumtrapz(dist,dt);
 laptime = t(end);
 % calculate steering angle
 sim.delta = rad2deg(findDelta(abs(sim.ay),sim.speed));
-neg = find(sim.ay<0);
-sim.delta(neg) = -1*sim.delta(neg);
+yneg = find(sim.ay<0);
+sim.delta(yneg) = -1*sim.delta(yneg);
 % slip ratio
 sim.Sxfl = findSxfl(sim.ax,sim.speed);
 sim.Sxfr = findSxfr(sim.ax,sim.speed);
@@ -81,14 +81,14 @@ sim.Safl = rad2deg(findSafl(abs(sim.ay),sim.speed));
 sim.Safr = rad2deg(findSafr(abs(sim.ay),sim.speed));
 sim.Sarl = rad2deg(findSarl(abs(sim.ay),sim.speed));
 sim.Sarr = rad2deg(findSarr(abs(sim.ay),sim.speed));
-sim.Safl(neg) = -1*sim.Safl(neg);
-sim.Safr(neg) = -1*sim.Safr(neg);
-sim.Sarl(neg) = -1*sim.Sarl(neg);
-sim.Sarr(neg) = -1*sim.Sarr(neg);
+sim.Safl(yneg) = -1*sim.Safl(yneg);
+sim.Safr(yneg) = -1*sim.Safr(yneg);
+sim.Sarl(yneg) = -1*sim.Sarl(yneg);
+sim.Sarr(yneg) = -1*sim.Sarr(yneg);
 
 % car statistics plots
 figure
-tiledlayout(5,1);
+tiledlayout(6,1);
 % plot speed profile
 nexttile;
 plot(dist,sim.speed*3.6);ylabel('speed (km/h)');ylim([0 140]);
@@ -105,6 +105,10 @@ title('Longitudinal Acceleration')
 nexttile
 plot(dist,rad2deg(sim.yaw));ylabel('dpsi (deg/s)');ylim([-180 180]);
 title('Yaw Rate')
+% plot steering
+nexttile
+plot(dist,sim.delta);ylabel('Steering Angle (deg)');ylim([-rad2deg(del_max) rad2deg(del_max)]);
+title('Steering Angle')
 % plot time
 nexttile
 plot(dist,t);ylabel('time (s)');ylim([0 t(end)]);
@@ -143,11 +147,6 @@ nexttile;
 plot(dist,sim.Sarr);ylabel('Slip Angle');ylim([-10 10]);
 title('RR')
 
-% driver control plots
-figure
-% plot steering
-plot(dist,sim.delta);ylabel('Steering Angle (deg)');ylim([-rad2deg(del_max) rad2deg(del_max)]);
-title('Steering Angle')
 
 
 %%
