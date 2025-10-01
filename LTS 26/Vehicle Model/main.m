@@ -50,14 +50,6 @@ figure
 %% initialize/reset simulation results
 num = length(C2);
 sim = struct();
-sim.ay = zeros(num,1);
-sim.ax = zeros(num,1);
-sim.speed = zeros(num,1);
-sim.torque = zeros(num,1);
-sim.accel = zeros(num,1);
-sim.brake = zeros(num,1);
-sim.throttle = zeros(num,1);
-
 %% run performance envelope
 GGV;
 
@@ -75,7 +67,26 @@ if sim.speed(1) == 0
 end
 t = cumtrapz(dist,dt);
 laptime = t(end);
+% calculate steering angle
+sim.delta = rad2deg(findDelta(abs(sim.ay),sim.speed));
+neg = find(sim.ay<0);
+sim.delta(neg) = -1*sim.delta(neg);
+% slip ratio
+sim.Sxfl = findSxfl(sim.ax,sim.speed);
+sim.Sxfr = findSxfr(sim.ax,sim.speed);
+sim.Sxrl = findSxrl(sim.ax,sim.speed);
+sim.Sxrr = findSxrr(sim.ax,sim.speed);
+% slip angle
+sim.Safl = rad2deg(findSafl(abs(sim.ay),sim.speed));
+sim.Safr = rad2deg(findSafr(abs(sim.ay),sim.speed));
+sim.Sarl = rad2deg(findSarl(abs(sim.ay),sim.speed));
+sim.Sarr = rad2deg(findSarr(abs(sim.ay),sim.speed));
+sim.Safl(neg) = -1*sim.Safl(neg);
+sim.Safr(neg) = -1*sim.Safr(neg);
+sim.Sarl(neg) = -1*sim.Sarl(neg);
+sim.Sarr(neg) = -1*sim.Sarr(neg);
 
+% car statistics plots
 figure
 tiledlayout(5,1);
 % plot speed profile
@@ -100,6 +111,46 @@ plot(dist,t);ylabel('time (s)');ylim([0 t(end)]);
 title('Time')
 xlabel('distance(m)')
 
+% tire data plots
+% slip ratio
+figure
+tiledlayout(4,1);
+nexttile;
+plot(dist,sim.Sxfl);ylabel('Slip Ratio');ylim([-0.1 0]);
+title('FL')
+nexttile;
+plot(dist,sim.Sxfr);ylabel('Slip Ratio');ylim([-0.1 0]);
+title('FR')
+nexttile;
+plot(dist,sim.Sxrl);ylabel('Slip Ratio');ylim([-0.1 0.1]);
+title('RL')
+nexttile;
+plot(dist,sim.Sxrr);ylabel('Slip Ratio');ylim([-0.1 0.1]);
+title('RR')
+% slip angle
+figure
+tiledlayout(4,1);
+nexttile;
+plot(dist,sim.Safl);ylabel('Slip Angle');ylim([-10 10]);
+title('FL')
+nexttile;
+plot(dist,sim.Safr);ylabel('Slip Angle');ylim([-10 10]);
+title('FR')
+nexttile;
+plot(dist,sim.Sarl);ylabel('Slip Angle');ylim([-10 10]);
+title('RL')
+nexttile;
+plot(dist,sim.Sarr);ylabel('Slip Angle');ylim([-10 10]);
+title('RR')
+
+% driver control plots
+figure
+% plot steering
+plot(dist,sim.delta);ylabel('Steering Angle (deg)');ylim([-rad2deg(del_max) rad2deg(del_max)]);
+title('Steering Angle')
+
+
+%%
 
 % plot color track map speed data
 figure
