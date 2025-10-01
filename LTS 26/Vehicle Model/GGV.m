@@ -29,6 +29,7 @@ v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 Vnum = 30;                           % number of speed variations
 Gnum = 20;                           % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
+failcount = 0;                       % number of failure in optimization
 
 tic
 
@@ -130,6 +131,7 @@ for i = 1:numel(velocityRange)
         catch
             GG.speed(i).ax(j) = NaN;
             GG.speed(i).ay(j) = NaN;
+            failcount = failcount+1;
             if j >1
                 GG.speed(i).delta(j) = GG.speed(i).delta(j-1);
                 GG.speed(i).beta(j) = GG.speed(i).beta(j-1);
@@ -197,11 +199,6 @@ PerfEnv =spline(performance.radius,performance.speed);
 
 
 %%
-
-% Empty 3xN array for [speed,ay,ax]
-performance.v = zeros(1,Vnum*(Gnum));
-performance.ax = zeros(1,Vnum*(Gnum));
-performance.ay = zeros(1,Vnum*(Gnum));
 for i = 1:Vnum
     for j = 1:Gnum
         % speed value
@@ -210,6 +207,18 @@ for i = 1:Vnum
         performance.ay((i-1)*(Gnum)+j) = GG.speed(i).ay(j);
         % ax value
         performance.ax((i-1)*(Gnum)+j) = GG.speed(i).ax(j);
+        % steering
+        performance.delta((i-1)*(Gnum)+j) = GG.speed(i).delta(j);
+        % slip ratio
+        performance.Sxfl((i-1)*(Gnum)+j) = GG.speed(i).Sxfl(j);
+        performance.Sxfr((i-1)*(Gnum)+j) = GG.speed(i).Sxfr(j);
+        performance.Sxrl((i-1)*(Gnum)+j) = GG.speed(i).Sxrl(j);
+        performance.Sxrr((i-1)*(Gnum)+j) = GG.speed(i).Sxrr(j);
+        % slip angle
+        performance.Safl((i-1)*(Gnum)+j) = GG.speed(i).Safl(j);
+        performance.Safr((i-1)*(Gnum)+j) = GG.speed(i).Safr(j);
+        performance.Sarl((i-1)*(Gnum)+j) = GG.speed(i).Sarl(j);
+        performance.Sarr((i-1)*(Gnum)+j) = GG.speed(i).Sarr(j);
     end
 end
 % split performance envelope in accel and brake
@@ -219,15 +228,17 @@ idxneg = performance.ax<0;
 accel.ax = performance.ax(idxpos);accel.ay = performance.ay(idxpos);accel.v = performance.v(idxpos);
 brake.ax = performance.ax(idxneg);brake.ay = performance.ay(idxneg);brake.v = performance.v(idxneg);
 
-%%
 % delete entries with NaN speed value
 idx = find(isnan(accel.v));
 accel.ax(idx) =[]; accel.ay(idx) =[]; accel.v(idx) =[];
 idx = find(isnan(brake.v));
 brake.ax(idx) =[]; brake.ay(idx) =[]; brake.v(idx) =[];
-%%
+idx = find(isnan(performance.ay));
+performance.delta(idx) =[]; performance.ay(idx) =[];performance.v(idx) =[];performance.ax(idx) =[];
+performance.Sxfl(idx) =[];performance.Sxfr(idx) =[];performance.Sxrl(idx) =[];performance.Sxrr(idx) =[];
+performance.Safl(idx) =[];performance.Safr(idx) =[];performance.Sarl(idx) =[];performance.Sarr(idx) =[];
 
-% % 3D interpolate Performance Envelope
+% 3D interpolate Performance Envelope
 % define max and min for interpolant
 axmax = max(accel.ax);
 axmin = min(brake.ax);
@@ -256,8 +267,126 @@ surf(ayq,axq,vq);
 xlabel('ay'); ylabel('ax'); zlabel('V');
 title('Interpolated Surface for Acceleration Envelope');
 colorbar;
+% steering
+figure
+plot3(performance.ay(:),rad2deg(performance.delta(:)),performance.v(:),'.');
+[vq,ayq]=meshgrid(linspace(vmin, vmax, 100), linspace(0, aymax, 100));
+findDelta =scatteredInterpolant(performance.ay(:),performance.v(:),performance.delta(:),'natural','boundary');
+deltaq = rad2deg(findDelta(ayq,vq));
+hold on
+surf(ayq,deltaq,vq);
+xlabel('ay'); ylabel('Delta'); zlabel('V');
+title('Interpolated Surface for Steering Envelope');
+colorbar;
+%% slip ratio
+% slip ratio FL
+figure
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Sxfl) <=0.0001);
+temp.ax(idxzero) =[];temp.Sxfl(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ax(:),temp.Sxfl(:),temp.v(:),'.');
+[axq,vq]=meshgrid(linspace(axmin, axmax, 100),linspace(vmin, vmax, 100));
+findSxfl =scatteredInterpolant(temp.ax(:),temp.v(:),temp.Sxfl(:),'natural','boundary');
+Sxflq = findSxfl(axq,vq);
+hold on
+surf(axq,Sxflq,vq);
+xlabel('ax'); ylabel('Sx'); zlabel('V');
+title('Interpolated Surface for Slip Ratio Envelope (FL)');
+% slip ratio FR
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Sxfr) <=0.0001);
+temp.ax(idxzero) =[];temp.Sxfr(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ax(:),temp.Sxfr(:),temp.v(:),'.');
+[axq,vq]=meshgrid(linspace(axmin, axmax, 100),linspace(vmin, vmax, 100));
+findSxfr =scatteredInterpolant(temp.ax(:),temp.v(:),temp.Sxfr(:),'natural','boundary');
+Sxfrq = findSxfr(axq,vq);
+hold on
+surf(axq,Sxfrq,vq);
+xlabel('ax'); ylabel('Sx'); zlabel('V');
+title('Interpolated Surface for Slip Ratio Envelope (FR)');
+% slip ratio RL
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Sxrl) <=0.0001);
+temp.ax(idxzero) =[];temp.Sxrl(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ax(:),temp.Sxrl(:),temp.v(:),'.');
+[axq,vq]=meshgrid(linspace(axmin, axmax, 100),linspace(vmin, vmax, 100));
+findSxrr =scatteredInterpolant(temp.ax(:),temp.v(:),temp.Sxrl(:),'natural','boundary');
+Sxrrq = findSxrr(axq,vq);
+hold on
+surf(axq,Sxrrq,vq);
+xlabel('ax'); ylabel('Sx'); zlabel('V');
+title('Interpolated Surface for Slip Ratio Envelope (RL)');
+% slip ratio RR
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Sxrr) <=0.0001);
+temp.ax(idxzero) =[];temp.Sxrr(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ax(:),temp.Sxrr(:),temp.v(:),'.');
+[axq,vq]=meshgrid(linspace(axmin, axmax, 100),linspace(vmin, vmax, 100));
+findSxrr =scatteredInterpolant(temp.ax(:),temp.v(:),temp.Sxrr(:),'natural','boundary');
+Sxrrq = findSxrr(axq,vq);
+hold on
+surf(axq,Sxrrq,vq);
+xlabel('ax'); ylabel('Sx'); zlabel('V');
+title('Interpolated Surface for Slip Ratio Envelope (RR)');
 
-
+%% slip angle
+% FL
+figure
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Safl) <=0.0001);
+temp.ay(idxzero) =[];temp.Safl(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ay(:),temp.Safl(:),temp.v(:),'.');
+[ayq,vq]=meshgrid(linspace(0, aymax, 100),linspace(vmin, vmax, 100));
+findSafl =scatteredInterpolant(temp.ay(:),temp.v(:),temp.Safl(:),'natural','boundary');
+Saflq = findSafl(ayq,vq);
+hold on
+surf(ayq,Saflq,vq);
+xlabel('ay'); ylabel('Sa'); zlabel('V');
+title('FL Slip Angle');
+% FR
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Safr) <=0.0001);
+temp.ay(idxzero) =[];temp.Safr(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ay(:),temp.Safr(:),temp.v(:),'.');
+[ayq,vq]=meshgrid(linspace(aymin, aymax, 100),linspace(vmin, vmax, 100));
+findSafr =scatteredInterpolant(temp.ay(:),temp.v(:),temp.Safr(:),'natural','boundary');
+Safrq = findSafr(ayq,vq);
+hold on
+surf(ayq,Safrq,vq);
+xlabel('ay'); ylabel('Sa'); zlabel('V');
+title('FR Slip Angle');
+% RL
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Sarl) <=0.0001);
+temp.ay(idxzero) =[];temp.Sarl(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ay(:),temp.Sarl(:),temp.v(:),'.');
+[ayq,vq]=meshgrid(linspace(aymin, aymax, 100),linspace(vmin, vmax, 100));
+findSarr =scatteredInterpolant(temp.ay(:),temp.v(:),temp.Sarl(:),'natural','boundary');
+Sarrq = findSarr(ayq,vq);
+hold on
+surf(ayq,Sarrq,vq);
+xlabel('ay'); ylabel('Sa'); zlabel('V');
+title('RL Slip Angle');
+% slip ratio RR
+nexttile
+temp = performance;
+idxzero = find(abs(temp.Sarr) <=0.0001);
+temp.ay(idxzero) =[];temp.Sarr(idxzero) =[];temp.v(idxzero) =[];
+plot3(temp.ay(:),temp.Sarr(:),temp.v(:),'.');
+[ayq,vq]=meshgrid(linspace(aymin, aymax, 100),linspace(vmin, vmax, 100));
+findSarr =scatteredInterpolant(temp.ay(:),temp.v(:),temp.Sarr(:),'natural','boundary');
+Sarrq = findSarr(ayq,vq);
+hold on
+surf(ayq,Sarrq,vq);
+xlabel('ay'); ylabel('Sa'); zlabel('V');
+title('RR Slip Angle');
 %%
 
 % interpolate performance envelope

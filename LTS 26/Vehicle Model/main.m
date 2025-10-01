@@ -37,8 +37,8 @@ CDs = 1.54709;                       % CD straight line
 ab = 0.5310665;                      % aero balance (front)
 % Powertrain Settings
 max_rpm = 5500;                      % maximum wheel speed (rpm)
-FDR = 3.00;                          % final drive ratio (-)
-Ipeak = 0.5;                         % power percentage (-)
+FDR = 3.36;                          % final drive ratio (-)
+Ipeak = 1.0;                         % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
 load('25 Endurance.mat');
@@ -98,8 +98,8 @@ title('Yaw Rate')
 nexttile
 plot(dist,t);ylabel('time (s)');ylim([0 t(end)]);
 title('Time')
-fprintf("Simulated lap time is %.3f seconds\n ", t(end));
 xlabel('distance(m)')
+
 
 % plot color track map speed data
 figure
@@ -112,3 +112,13 @@ xlabel('X Position (m)', 'FontSize', 12);
 ylabel('Y Position (m)', 'FontSize', 12);
 grid on;
 axis equal;
+
+%% summary
+fprintf('*******Simulation Summary*******\n');
+fprintf("Simulated lap time: %.3f (seconds)\n", t(end));
+fprintf("Maximum Lateral Acceleration: %.3f (G)\n",max(abs(sim.ay))/9.81);
+fprintf("Maximum Acceleration: %.3f (G)\n", max(sim.ax)/9.81);
+fprintf("Maximum Braking: %.3f (G)\n", min(sim.ax)/9.81);
+fprintf("Number of optimization failure: %d \n", failcount);
+fprintf("Percentage of optimization failure: %.3f (%%)\n", failcount*100/(Vnum*Gnum));
+
