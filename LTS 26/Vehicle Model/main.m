@@ -43,6 +43,7 @@ PMaxLimit = 80;                      % power limit (KW)
 % Race Track
 endurance = 'Endurance.mat';
 skidpad = 'Skidpad.mat';
+acceleration = 'Acceleration.mat';
 % Rolling/Standing start
 static = false;
 
