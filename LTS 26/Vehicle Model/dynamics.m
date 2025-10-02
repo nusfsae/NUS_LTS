@@ -59,10 +59,11 @@ for i = 1:length(C2)-1
     v1 = sim.speed(i+1);
     sim.ax(i) = (v1^2-v0^2)/(2*(dist(i+1)-dist(i)));
 end
+sim.ax = transpose(sim.ax);
 % acceleration at end point
 if static == true
-    sim.ax(end) = axAccel(sim.speed(end),sim.ay(end));
+    sim.ax(end+1) = axAccel(sim.speed(end),sim.ay(end));
 else 
-    sim.ax(end) = (sim.speed(1)^2-sim.speed(end)^2)/(2*dist(end));
+    sim.ax(end+1) = (sim.speed(1)^2-sim.speed(end)^2)/(2*dist(end));
 end
 

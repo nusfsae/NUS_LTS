@@ -41,17 +41,20 @@ FDR = 3.36;                          % final drive ratio (-)
 Ipeak = 1.0;                         % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
-load('25 Endurance.mat');
+endurance = 'Endurance.mat';
+skidpad = 'Skidpad.mat';
 % Rolling/Standing start
 static = false;
 
 figure
 
-%% initialize/reset simulation results
-num = length(C2);
-sim = struct();
 %% run performance envelope
 GGV;
+
+%% initialize/reset simulation results
+load(skidpad);
+num = length(C2);
+sim = struct();
 
 %% dynamic simulation
 dynamics;
