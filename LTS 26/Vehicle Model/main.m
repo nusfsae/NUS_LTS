@@ -9,7 +9,7 @@
 clear
 
 %% load files
-addpath('C:\Users\Patri\casadi-3.6.7-windows64-matlab2018b')
+addpath('C:\Users\PC5\Documents\casadi-3.6.7-windows64-matlab2018b')
 addpath(genpath(cd))
 
 %% enter settings:

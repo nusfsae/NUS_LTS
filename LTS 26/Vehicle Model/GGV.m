@@ -16,7 +16,7 @@ maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 % % IPOPT Settings
 opts = struct();
 opts.print_time = false;
-opts.ipopt.print_level = 5;
+opts.ipopt.print_level = 1;
 opts.ipopt.tol = 1e-6;
 opts.ipopt.acceptable_tol = 1e-4;
 opts.ipopt.acceptable_iter = 15;
