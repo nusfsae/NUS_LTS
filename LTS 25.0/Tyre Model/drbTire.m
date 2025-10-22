@@ -28,45 +28,143 @@ FDR = 3.36;
 R = 0.2032;
 sen_lat = 1;
 
-
-
-% tyre_model = HoosierR25;
-% figure
-% 
-% % zero long slip
-% for V = 10:20:100
-%     V = V/3.6;
-%     Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
-%     Flist = zeros(15/0.1,2);
-% 
-%     for alphadeg = 0:0.1:15
-% 
-%         alpharad = deg2rad(alphadeg);
-%         inputsMF = [Reaction_f 0 alpharad camber phit V P];
-%         [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
-%         Lat = abs(outMF(2));
-%         index = int32(((alphadeg-0)/0.1)+1);
-%         %disp(index)
-%         Flist(index,1) = Lat*tc_long;
-%         Flist(index,2) = alphadeg;
-% 
-% 
-%     end
-%     %f = fit(Flist(:,2),Flist(:,1),'poly2');
-%     plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Speed = "+ V*3.6+"km/h "+"[R20]",'LineWidth',2);
-% 
-%     legend
-%     lg = legend
-%     lg.FontSize = 12
-%     hold on
-% end
-% 
-% sgtitle("Lateral Tire Data")
-% xlabel("Slip Angle (degree)",'FontSize',14)
-% ylabel("Lateral Force (N)",'FontSize',14)   
+P = convpres(P,'psi','pa');
 
 
 
+tyre_model = HoosierR25;
+figure
+Vlist = linspace(10,30,10);
+
+% zero long slip
+for i = 1:length(Vlist)
+    V = Vlist(i);
+    Reaction_f = (mass*9.81 + 0.5*CLc*frontel_area*V^2)/4;
+    Flist = zeros(length(Vlist),2);
+    index = 0;
+    for alphadeg = -15:0.1:15
+        index = index+1;
+        alpharad = deg2rad(alphadeg);
+        inputsMF = [Reaction_f 0 alpharad camber phit V P];
+        [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+        Lat = outMF(2);
+        %disp(index)
+        Flist(index,1) = Lat*tc_long;
+        Flist(index,2) = alphadeg;
+    end
+    plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Speed = "+ V*3.6+"km/h "+"[R20]",'LineWidth',2);
+
+    legend
+    lg = legend;
+    lg.FontSize = 12;
+    hold on
+end
+sgtitle("Lateral Tire Data")
+xlabel("Slip Angle (degree)",'FontSize',14)
+ylabel("Lateral Force (N)",'FontSize',14)   
+%% Normal Load
+tyre_model = HoosierR25;
+figure
+Nlist = linspace(200,2000,10);
+
+% zero long slip
+for i = 1:length(Nlist)
+    N = Nlist(i);
+    Reaction_f = N;
+    Flist = zeros(length(Nlist),2);
+    index = 0;
+    for alphadeg = -15:0.1:15
+        index = index+1;
+        alpharad = deg2rad(alphadeg);
+        inputsMF = [Reaction_f 0 alpharad camber phit V P];
+        [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+        Lat = outMF(2);
+        %disp(index)
+        Flist(index,1) = Lat*tc_long;
+        Flist(index,2) = alphadeg;
+    end
+    plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Normal Load = "+ N+"N ",'LineWidth',2);
+
+    legend
+    lg = legend;
+    lg.FontSize = 12;
+    hold on
+end
+sgtitle("Lateral Tire Data")
+xlabel("Slip Angle (degree)",'FontSize',14)
+ylabel("Lateral Force (N)",'FontSize',14)   
+
+%% IA
+tyre_model = HoosierR25;
+figure
+IAlist = linspace(-4,4,4);
+
+% zero long slip
+for i = 1:length(IAlist)
+    IA = IAlist(i);
+    Reaction_f = 1000;
+    Flist = zeros(length(IAlist),2);
+    index = 0;
+    for alphadeg = -10:0.1:10
+        index = index+1;
+        alpharad = deg2rad(alphadeg);
+        camber = deg2rad(IA);
+        inputsMF = [Reaction_f 0 alpharad camber phit V P];
+        [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+        Lat = outMF(2);
+        %disp(index)
+        Flist(index,1) = Lat*tc_long;
+        Flist(index,2) = alphadeg;
+    end
+    plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Inclination Angle = "+ IA+" degree ",'LineWidth',2);
+
+    legend
+    lg = legend;
+    lg.FontSize = 12;
+    hold on
+end
+sgtitle("Lateral Tire Data")
+xlabel("Slip Angle (degree)",'FontSize',14)
+ylabel("Lateral Force (N)",'FontSize',14)   
+
+
+
+%% Pressure
+tyre_model = HoosierR25;
+figure
+Plist = linspace(6,15,5);
+
+% zero long slip
+for i = 1:length(Plist)
+    P = Plist(i);
+    Preal = convpres(P,'psi','pa');
+    Reaction_f = 1000;
+    Flist = zeros(length(Plist),2);
+    index = 0;
+    for alphadeg = -10:0.1:10
+        index = index+1;
+        alpharad = deg2rad(alphadeg);
+        camber = deg2rad(IA);
+        inputsMF = [Reaction_f 0 alpharad camber phit V Preal];
+        [ outMF ] = mfeval(tyre_model, inputsMF, useMode);
+        Lat = outMF(2);
+        %disp(index)
+        Flist(index,1) = Lat*tc_long;
+        Flist(index,2) = alphadeg;
+    end
+    plot(Flist(:,2),Flist(:,1),"-",'DisplayName',"Pressure = "+ P+" psi ",'LineWidth',2);
+
+    legend
+    lg = legend;
+    lg.FontSize = 12;
+    hold on
+end
+sgtitle("Lateral Tire Data")
+xlabel("Slip Angle (degree)",'FontSize',14)
+ylabel("Lateral Force (N)",'FontSize',14)   
+
+
+%%
 % tyre_model = HoosierR20;
 % 
 figure

@@ -26,6 +26,7 @@ opts.ipopt.max_iter = 3000;
 % % Mesh Discretization
 v_min = 10;                          % minimum speed for GG calculation (m/s)
 v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
+mass = vehicle+driver;               % vehicle mass (kg)
 Vnum = 30;                           % number of speed variations
 Gnum = 20;                           % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points

@@ -5,12 +5,14 @@
 a = wheelbase*cg_f;
 b = wheelbase-a;
 d = track;
+% steering angle with ackerman
+[delta_in,delta_out] = ackerman(delta,AckSource);
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
 % slip angles
-Safr = -delta + atan((dy+a*dpsi)/(dx+d*dpsi/2));
-Safl = -delta + atan((dy+a*dpsi)/(dx-d*dpsi/2));
+Safr = -delta_in + atan((dy+a*dpsi)/(dx+d*dpsi/2));
+Safl = -delta_out + atan((dy+a*dpsi)/(dx-d*dpsi/2));
 Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2));
 Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2));
 % aerodynamics
@@ -36,9 +38,9 @@ Fzrr = Fz+AeroR/2+latLT-longLT;
 
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
-Fy = (Fyfr+Fyfl)*cos(delta)+(Fxfr+Fxfl)*sin(delta)+Fyrl+Fyrr;
-Fx = (Fxfr+Fxfl)*cos(delta)-(Fyfr+Fyfl)*sin(delta)+Fxrl+Fxrr;
-Mz = (a*(Fxfr+Fxfl)*sin(delta)+a*(Fyfr+Fyfl)*cos(delta)-b*(Fyrl+Fyrr)+d*(Fxfr-Fxfl)*cos(delta)/2+d*(Fxrr-Fxrl)/2+d*(Fyfl-Fyfr)*sin(delta)/2);
+Fy = Fyfr*cos(delta_in)+Fyfl*cos(delta_out)+Fxfr*sin(delta_in)+Fxfl*sin(delta_out)+Fyrl+Fyrr;
+Fx = Fxfr*cos(delta_in)+Fxfl*cos(delta_out)-Fyfr*sin(delta_in)+Fyfl*sin(delta_out)+Fxrl+Fxrr;
+Mz = (a*(Fxfr*sin(delta_in)+Fxfl*sin(delta_out))+a*(Fyfr*cos(delta_in)+Fyfl*cos(delta_out))-b*(Fyrl+Fyrr)+d*(Fxfr*cos(delta_in)-Fxfl*cos(delta_out))/2+d*(Fxrr-Fxrl)/2+d*(Fyfl*sin(delta_out)-Fyfr*sin(delta_in))/2);
 
 % % Powertrain model
 Fxpwt = 0.9*Ipeak*220*FDR/R;
