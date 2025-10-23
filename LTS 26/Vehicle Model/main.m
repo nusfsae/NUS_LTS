@@ -26,7 +26,10 @@ del_max = 0.565;                     % maximum steering angle (rad)
 R = 0.2032;                          % wheel radius (m)
 P = 9;                               % tire pressue (psi)
 IA = 0;                              % inclination angle (rad)
-AckSource = "ackerman.xlsx";   
+% read ackerman data
+AckSource = readmatrix("ackerman.xlsx");   
+[~, ~, p_inner, p_outer] = acker([], AckSource);
+save('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 % Tyre Settings
 para = H1675;                        % tire selection
 % Aerodynamics Settings

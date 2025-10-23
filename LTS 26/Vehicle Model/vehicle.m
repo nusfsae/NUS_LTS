@@ -1,12 +1,14 @@
 % % Vehicle Model
 
 % % Equations of Motions
+% Load pre-computed ackerman coefficients
+load('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 % CG location and vehicle dimensions
 a = wheelbase*cg_f;
 b = wheelbase-a;
 d = track;
 % steering angle with ackerman
-[delta_in,delta_out] = ackerman(delta,AckSource);
+[delta_in, delta_out] = ackerman(delta, [], p_inner, p_outer);
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
