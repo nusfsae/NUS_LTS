@@ -8,7 +8,7 @@ a = wheelbase*cg_f;
 b = wheelbase-a;
 d = track;
 % steering angle with ackerman
-[delta_in, delta_out] = ackerman(delta, [], p_inner, p_outer);
+[delta_in, delta_out] = acker(delta, [], p_inner, p_outer);
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
@@ -45,11 +45,11 @@ Fx = Fxfr*cos(delta_in)+Fxfl*cos(delta_out)-Fyfr*sin(delta_in)+Fyfl*sin(delta_ou
 Mz = (a*(Fxfr*sin(delta_in)+Fxfl*sin(delta_out))+a*(Fyfr*cos(delta_in)+Fyfl*cos(delta_out))-b*(Fyrl+Fyrr)+d*(Fxfr*cos(delta_in)-Fxfl*cos(delta_out))/2+d*(Fxrr-Fxrl)/2+d*(Fyfl*sin(delta_out)-Fyfr*sin(delta_in))/2);
 
 % % Powertrain model
-Fxpwt = 0.9*Ipeak*220*FDR/R;
+Fxpwt = 0.6*Ipeak*220*FDR/R;
 v_weak =86.5/3.6;
 Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
 if V>v_weak
-    Fxpwt =0.9*Ipeak*Iweak*FDR/R;
+    Fxpwt =0.6*Ipeak*Iweak*FDR/R;
 end
 
 % accelerations in path tangential coordinates

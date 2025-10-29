@@ -51,21 +51,21 @@ opts.ipopt.acceptable_iter = 15;
 opts.ipopt.max_iter = 3000;
 
 % % Mesh Discretization
-Gnum = 20;       
+Gnum = 30;       
 
 tic
 % % Create empty performance envelope GG
 GG = struct();
 
 %%
-figure
-
 % % Steady State Speed Setting
-V = 11; 
+% V = 15; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
 AngleRange = linspace(pi/2,-pi/2,Gnum);
+% reset failcount
+failcount = 0;
 % each combination of ax/ay
 for j = 1:numel(AngleRange)
     % ax/ay angle
@@ -129,6 +129,7 @@ for j = 1:numel(AngleRange)
     % objective
     opti.minimize(-p);
     % results
+    try
     x = opti.solve();
     GG.ax(j) = x.value(ax);
     GG.ay(j) = x.value(ay);
@@ -145,14 +146,47 @@ for j = 1:numel(AngleRange)
     GG.Safr(j) = x.value(Safr);
     GG.Sarl(j) = x.value(Sarl);
     GG.Sarr(j) = x.value(Sarr);
-    % real-time plot
-    plot(GG.ay(j),GG.ax(j),'x')
-    hold on
+    catch
+        GG.ax(j) = NaN;
+        GG.ay(j) = NaN;
+        failcount = failcount+1;
+        if j >1
+            GG.delta(j) = GG.delta(j-1);
+            GG.beta(j) = GG.beta(j-1);
+            GG.dpsi(j) = GG.dpsi(j-1);
+            % slip ratio
+            GG.Sxfl(j) = GG.Sxfl(j-1);
+            GG.Sxfr(j) = GG.Sxfr(j-1);
+            GG.Sxrl(j) = GG.Sxrl(j-1);
+            GG.Sxrr(j) = GG.Sxrr(j-1);
+            % slip angle
+            GG.Safl(j) = GG.Safl(j-1);
+            GG.Safr(j) = GG.Safr(j-1);
+            GG.Sarl(j) = GG.Sarl(j-1);
+            GG.Sarr(j) = GG.Sarr(j-1);
+            fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+        else
+            GG.delta(j) = 0;
+            GG.beta(j) = 0;
+            GG.dpsi(j) = 0;
+            % slip ratio
+            GG.Sxfl(j) = 0;
+            GG.Sxfr(j) = 0;
+            GG.Sxrl(j) = 0;
+            GG.Sxrr(j) = 0;
+            % slip angle
+            GG.Safl(j) = 0;
+            GG.Safr(j) = 0;
+            GG.Sarl(j) = 0;
+            GG.Sarr(j) = 0;
+            fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+        end
+    end
 end
 
 
-figure
-plot(GG.ay,GG.ax)
+% figure
+% plot(GG.ay,GG.ax)
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))

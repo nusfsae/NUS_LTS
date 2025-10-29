@@ -15,7 +15,7 @@ addpath(genpath(cd))
 %% enter settings:
 
 % Chassis Settings
-vehicle = 199.6;                     % vehicle mass (kg)
+car = 199.6;                         % vehicle mass (kg)
 driver = 65;                         % driver mass (kg)
 track = 1.21;                        % track width (m)
 cg_f = 0.5095;                       % mass bias to front (-)
@@ -58,7 +58,7 @@ figure
 GGV;
 
 %% initialize/reset simulation results
-load(Endurance);
+load(endurance);
 num = length(C2);
 sim = struct();
 
