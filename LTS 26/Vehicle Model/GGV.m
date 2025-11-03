@@ -168,6 +168,33 @@ for i = 1:numel(velocityRange)
     end
 end
 
+%% GGV plot
+figure
+
+% First, check if all speeds have the same number of points
+num_speeds = numel(velocityRange);
+num_points = numel(GG.speed(1).ay);
+% Preallocate matrices
+ay_matrix = zeros(num_speeds, num_points);
+ax_matrix = zeros(num_speeds, num_points);
+speed_matrix = zeros(num_speeds, num_points);
+% Fill matrices
+for i = 1:num_speeds
+    GG.speed(i).aymax = max(GG.speed(i).ay);    
+    % Make sure data is a row vector
+    ay_matrix(i, :) = GG.speed(i).ay(:)';  % Force row vector with (:)'
+    ax_matrix(i, :) = GG.speed(i).ax(:)';
+    speed_matrix(i, :) = GG.speed(i).speed;
+end
+
+% Create surface plot
+surf(ay_matrix, ax_matrix, speed_matrix)
+xlabel('Lateral Acceleration ay (m/s²)')
+ylabel('Longitudinal Acceleration ax (m/s²)')
+zlabel('Speed (m/s)')
+title('GG Diagram - 3D Performance Envelope')
+view(3)
+grid on
 
 %%
 % % Performance Envelope for maximum cornering G
