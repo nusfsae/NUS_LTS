@@ -30,31 +30,31 @@ cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Enter settings of car %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Vehicle Mass (kg)                        % Air Density (kg/m^3)                   % Tyre Model
-mass = 264.6;                              air_density = 1.196;                     tyre_model = HoosierR25;
+mass = 266.1;                              air_density = 1.196;                     tyre_model = HoosierR25;
 
 % Tyre Pressure (psi)                      % Longitudinal Slip                      % Turn Slip (1/m)
 P = 9;                                     long_slip = 0.145;                       phit = 0;
 
 % Coefficient of Drag (Straight)           % Coefficient of Lift (Straight)         % Coefficient of Lift (Corner)
-CDs = 1.54709;                             CLs = 4.116061;                          CLc = 3.782684;
+CDs = 1.543477;                            CLs = 4.034158;                          CLc = 3.827925;
                    
 % Coefficient of Drag (Corner)             % Vehicle Wheelbase (m)                  % Wheel Radius (m)
-CDc = 1.410518;                            wheelbase = 1.531;                       R_wheel = 0.2032;
+CDc = 1.403381;                            wheelbase = 1.531;                       R_wheel = 0.2032;
 
 % Static Camber (Radian)                   % Car Frontel Area (m^2)                 % Maximum Steering Angle (Degree)
-camber = 0;                                frontel_area = 1.157757;                 maxsteer = 32.372; 
+camber = 0;                                frontel_area = 1.126726;                 maxsteer = 32.372; 
 
 % Maximum Motor Torque (Nm)                % Final Drive Ratio                      % Motor Maximum Rotation Speed (RPM)
-max_torque = 169.58;                                                     max_rpm = 4900;
+max_torque = 169.58;                       FDR = 3.36;                              max_rpm = 5500;
 
 % Lateral Tire Correlation Factor          % Longitudinal Tire Correlation Factor   % Longitudinal Tire Sensitivity 
 tc_lat = 0.49    ;                         tc_long = 1;                           sen_long = 1;
 
 % Lateral Tire Sensitivity                 % Torque Setting
-sen_lat = 1;                               Ipeak = 1;
+sen_lat = 1;                               Ipeak = 0.6;
 
 % Tire Model Setting                       % CG Height                              % Aero Balance
-useMode = 121;                             cg_h = 0.256;                            ab = 0.5310665;
+useMode = 121;                             cg_h = 0.256;                            ab = 0.5285127;
 
 
 % Rolling Start: 1  Static Start: 0

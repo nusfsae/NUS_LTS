@@ -17,9 +17,18 @@ Safr = -delta_in + atan((dy+a*dpsi)/(dx+d*dpsi/2));
 Safl = -delta_out + atan((dy+a*dpsi)/(dx-d*dpsi/2));
 Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2));
 Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2));
+% aerodynamics straight/corner
+k = 1000;
+delta_margin = 2*pi/180;
+eps = 1e-6;
+delta_abs = sqrt(delta_in^2 + eps);
+sigmoid = 1/(1+exp(-k*(delta_abs-delta_margin)));
+CL = CLs*(1-sigmoid)+CLc*sigmoid;
+CD = CDs*(1-sigmoid)+CDc*sigmoid;
+ab = ab_s*(1-sigmoid)+ab_c*sigmoid;
 % aerodynamics
-Drag = 0.5*den*(V^2)*CDs*farea;
-Lift = 0.5*den*(V^2)*CLs*farea;
+Drag = 0.5*den*(V^2)*CD*farea;
+Lift = 0.5*den*(V^2)*CL*farea;
 AeroF = Lift*ab;
 AeroR = Lift*(1-ab);
 % normal load by mass

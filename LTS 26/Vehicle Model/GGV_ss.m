@@ -59,7 +59,7 @@ GG = struct();
 
 %%
 % % Steady State Speed Setting
-% V = 15; 
+V = 20; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -185,8 +185,11 @@ for j = 1:numel(AngleRange)
 end
 
 
-% figure
-% plot(GG.ay,GG.ax)
+figure
+plot(GG.ay,GG.ax,'y','DisplayName', 'GGV');
+xlabel("ax",'FontSize',14)
+ylabel("ay",'FontSize',14)
+legend
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))
