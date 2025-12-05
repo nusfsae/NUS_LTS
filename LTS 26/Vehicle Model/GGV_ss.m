@@ -13,16 +13,18 @@ del_max = 0.565;                     % maximum steering angle (rad)
 R = 0.2032;                          % wheel radius (m)
 P = 9;                               % tire pressue (psi)
 IA = 0;                              % inclination angle (rad)
+brakebias = 0.55;                    % brake bias
 % Tyre Settings
 para = H1675;                        % tire selection
 % Aerodynamics Settings
 den = 1.196;                         % air density (kgm^-3)
 farea = 1.157757;                    % frontel area (m^2)
-CLc = 3.782684;                      % CL cornering
-CDc = 1.410518;                      % CD cornering
-CLs = 4.116061;                      % CL straight line
-CDs = 1.54709;                       % CD cornering
-ab = 0.5310665;                      % aero balance (front)
+CLc = 3.828;                         % CL cornering
+CDc = 1.403;                         % CD cornering
+ab_c = 0.528;                        % aero balance cornering (front)
+CLs = 4.034;                         % CL straight line
+CDs = 1.543;                         % CD straight line
+ab_s = 0.549;                        % aero balance straight line (front)
 % Powertrain Settings
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.36;                          % final drive ratio (-)
@@ -51,7 +53,7 @@ opts.ipopt.acceptable_iter = 15;
 opts.ipopt.max_iter = 3000;
 
 % % Mesh Discretization
-Gnum = 30;       
+Gnum = 50;       
 
 tic
 % % Create empty performance envelope GG
@@ -102,10 +104,20 @@ for j = 1:numel(AngleRange)
         opti.set_initial(Sxrl,GG.Sxrl(j-1));
         opti.set_initial(Sxrr,GG.Sxrr(j-1));
         opti.set_initial(dpsi,GG.dpsi(j-1));
-    end
+        if isnan(GG.ax(j-1))
+            opti.set_initial(delta,0);
+            opti.set_initial(beta,0);
+            opti.set_initial(Sxfl,0);
+            opti.set_initial(Sxfr,0);
+            opti.set_initial(Sxrl,0);
+            opti.set_initial(Sxrr,0);
+            opti.set_initial(dpsi,0);
+        end
+    end    
     % define constraints
     opti.subject_to(ax_res ==0);
     opti.subject_to(ay_res ==0);
+    opti.subject_to(bias_res ==0);
     opti.subject_to(Mz == 0);
     opti.subject_to( ay-V*dpsi == 0);
     opti.subject_to(-maxSa<=Safl<=maxSa);
@@ -118,6 +130,8 @@ for j = 1:numel(AngleRange)
     opti.subject_to(Fzfr >= min_Fz);
     opti.subject_to(Fzrl >= min_Fz);
     opti.subject_to(Fzrr >= min_Fz);
+    opti.subject_to(Fxfl*Fxrl >= 0); % front&rear must have same sign
+    opti.subject_to(Fxfr*Fxrr >= 0);
     % Speed-dependent initial guess
     if V > 20 
         opti.set_initial(p, maxp*0.3);  % Conservative initial guess
@@ -130,57 +144,61 @@ for j = 1:numel(AngleRange)
     opti.minimize(-p);
     % results
     try
-    x = opti.solve();
-    GG.ax(j) = x.value(ax);
-    GG.ay(j) = x.value(ay);
-    GG.delta(j) = x.value(delta);
-    GG.beta(j) = x.value(beta);
-    GG.dpsi(j) = x.value(dpsi);
-    % slip ratio
-    GG.Sxfl(j) = x.value(Sxfl);
-    GG.Sxfr(j) = x.value(Sxfr);
-    GG.Sxrl(j) = x.value(Sxrl);
-    GG.Sxrr(j) = x.value(Sxrr);
-    % slip angle
-    GG.Safl(j) = x.value(Safl);
-    GG.Safr(j) = x.value(Safr);
-    GG.Sarl(j) = x.value(Sarl);
-    GG.Sarr(j) = x.value(Sarr);
+        x = opti.solve();
+        GG.ax(j) = x.value(ax);
+        GG.ay(j) = x.value(ay);
+        GG.delta(j) = x.value(delta);
+        GG.beta(j) = x.value(beta);
+        GG.dpsi(j) = x.value(dpsi);
+        Ts.Fxfl(j) = x.value(Fxfl);
+        Ts.Fxrl(j) = x.value(Fxrl);
+        Ts.tyrebias(j) = x.value(tyrebias);
+        Ts.ind(j) = x.value(ind);
+        % slip ratio
+        GG.Sxfl(j) = x.value(Sxfl);
+        GG.Sxfr(j) = x.value(Sxfr);
+        GG.Sxrl(j) = x.value(Sxrl);
+        GG.Sxrr(j) = x.value(Sxrr);
+        % slip angle
+        GG.Safl(j) = x.value(Safl);
+        GG.Safr(j) = x.value(Safr);
+        GG.Sarl(j) = x.value(Sarl);
+        GG.Sarr(j) = x.value(Sarr);
     catch
         GG.ax(j) = NaN;
         GG.ay(j) = NaN;
         failcount = failcount+1;
-        if j >1
-            GG.delta(j) = GG.delta(j-1);
-            GG.beta(j) = GG.beta(j-1);
-            GG.dpsi(j) = GG.dpsi(j-1);
-            % slip ratio
-            GG.Sxfl(j) = GG.Sxfl(j-1);
-            GG.Sxfr(j) = GG.Sxfr(j-1);
-            GG.Sxrl(j) = GG.Sxrl(j-1);
-            GG.Sxrr(j) = GG.Sxrr(j-1);
-            % slip angle
-            GG.Safl(j) = GG.Safl(j-1);
-            GG.Safr(j) = GG.Safr(j-1);
-            GG.Sarl(j) = GG.Sarl(j-1);
-            GG.Sarr(j) = GG.Sarr(j-1);
-            fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
-        else
-            GG.delta(j) = 0;
-            GG.beta(j) = 0;
-            GG.dpsi(j) = 0;
-            % slip ratio
-            GG.Sxfl(j) = 0;
-            GG.Sxfr(j) = 0;
-            GG.Sxrl(j) = 0;
-            GG.Sxrr(j) = 0;
-            % slip angle
-            GG.Safl(j) = 0;
-            GG.Safr(j) = 0;
-            GG.Sarl(j) = 0;
-            GG.Sarr(j) = 0;
-            fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
-        end
+        % if j >1
+        %     GG.delta(j) = GG.delta(j-1);
+        %     GG.beta(j) = GG.beta(j-1);
+        %     GG.dpsi(j) = GG.dpsi(j-1);
+        %     % slip ratio
+        %     GG.Sxfl(j) = GG.Sxfl(j-1);
+        %     GG.Sxfr(j) = GG.Sxfr(j-1);
+        %     GG.Sxrl(j) = GG.Sxrl(j-1);
+        %     GG.Sxrr(j) = GG.Sxrr(j-1);
+        %     % slip angle
+        %     GG.Safl(j) = GG.Safl(j-1);
+        %     GG.Safr(j) = GG.Safr(j-1);
+        %     GG.Sarl(j) = GG.Sarl(j-1);
+        %     GG.Sarr(j) = GG.Sarr(j-1);
+        %     fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+        % else
+        %     GG.delta(j) = 0;
+        %     GG.beta(j) = 0;
+        %     GG.dpsi(j) = 0;
+        %     % slip ratio
+        %     GG.Sxfl(j) = 0;
+        %     GG.Sxfr(j) = 0;
+        %     GG.Sxrl(j) = 0;
+        %     GG.Sxrr(j) = 0;
+        %     % slip angle
+        %     GG.Safl(j) = 0;
+        %     GG.Safr(j) = 0;
+        %     GG.Sarl(j) = 0;
+        %     GG.Sarr(j) = 0;
+        %     fprintf("Combined Slip Failed at V - %0.2f [m/s] & j - %0.2f [m/s^2] \n", V, j)
+        % end
     end
 end
 
@@ -190,6 +208,10 @@ plot(GG.ay,GG.ax,'y','DisplayName', 'GGV');
 xlabel("ax",'FontSize',14)
 ylabel("ay",'FontSize',14)
 legend
+
+fprintf("Number of optimization failure: %d \n", failcount);
+fprintf("Percentage of optimization failure: %.3f (%%)\n", failcount*100/(Gnum));
+
 % figure
 % yyaxis left
 % plot(rad2deg(GG.delta))

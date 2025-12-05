@@ -101,6 +101,10 @@ for i = 1:numel(velocityRange)
         opti.subject_to(Fzfr >= min_Fz);
         opti.subject_to(Fzrl >= min_Fz);
         opti.subject_to(Fzrr >= min_Fz);
+        % brake bias
+        if smoothPos(Fx) == 0
+            opti.subject_to(FminF == FminSum*brakebias);
+        end
         % Speed-dependent initial guess
         if V > 20
             opti.set_initial(p, maxp*0.3);  % Conservative initial guess

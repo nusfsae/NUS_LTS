@@ -26,6 +26,7 @@ del_max = 0.565;                     % maximum steering angle (rad)
 R = 0.2032;                          % wheel radius (m)
 P = 9;                               % tire pressue (psi)
 IA = 0;                              % inclination angle (rad)
+brakebias = 0.62;                    % brake bias
 % Ackerman Settings
 AckSource = readmatrix("ackerman.xlsx");   
 [~, ~, p_inner, p_outer] = acker([], AckSource);
@@ -35,13 +36,13 @@ para = H1675;                        % tire selection
 % Aerodynamics Settings
 den = 1.196;                         % air density (kgm^-3)
 farea = 1.157757;                    % frontel area (m^2)
-CLc = 3.828;                      % CL cornering
-CDc = 1.403;                      % CD cornering
-ab_c = 0.528;                    % aero balance cornering (front)
-CLs = 4.034;                      % CL straight line
-CDs = 1.543;                       % CD straight line
-ab_s = 0.549;                    % aero balance straight line (front)
-% Powertrain Settings
+CLc = 3.828;                         % CL cornering
+CDc = 1.403;                         % CD cornering
+ab_c = 0.528;                        % aero balance cornering (front)
+CLs = 4.034;                         % CL straight line
+CDs = 1.543;                         % CD straight line
+ab_s = 0.549;                        % aero balance straight line (front)
+% Powertrain Settings 
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.36;                          % final drive ratio (-)
 Ipeak = 0.6*0.8;                         % power percentage (-)

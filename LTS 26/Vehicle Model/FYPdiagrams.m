@@ -74,7 +74,7 @@ grid on
 speed = performance.speed;
 radius = performance.radius;
 % Define a smooth radius range
-radius_query = linspace(0, 30, 200);
+radius_query = linspace(0, 50, 200);
 % Evaluate the spline at those radii
 speed_interp = ppval(PerfEnv, radius_query);
 % Plot

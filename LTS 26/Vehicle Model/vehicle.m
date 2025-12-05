@@ -7,6 +7,9 @@ load('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 a = wheelbase*cg_f;
 b = wheelbase-a;
 d = track;
+% sigmoid function to replace IF-ELSE
+k = 1000;
+eps = 1e-6;
 % steering angle with ackerman
 [delta_in, delta_out] = acker(delta, [], p_inner, p_outer);
 % velocities in vehicle fixed coordinates
@@ -17,15 +20,13 @@ Safr = -delta_in + atan((dy+a*dpsi)/(dx+d*dpsi/2));
 Safl = -delta_out + atan((dy+a*dpsi)/(dx-d*dpsi/2));
 Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2));
 Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2));
-% aerodynamics straight/corner
-k = 1000;
+% aerodynamics straight/corner diff by steering
 delta_margin = 2*pi/180;
-eps = 1e-6;
 delta_abs = sqrt(delta_in^2 + eps);
 sigmoid = 1/(1+exp(-k*(delta_abs-delta_margin)));
 CL = CLs*(1-sigmoid)+CLc*sigmoid;
 CD = CDs*(1-sigmoid)+CDc*sigmoid;
-ab = ab_s*(1-sigmoid)+ab_c*sigmoid;
+ab = ab_s*(1-sigmoid)+CDc*sigmoid;
 % aerodynamics
 Drag = 0.5*den*(V^2)*CD*farea;
 Lift = 0.5*den*(V^2)*CL*farea;
@@ -46,6 +47,9 @@ Fzrr = Fz+AeroR/2+latLT-longLT;
 [Fyfl,Fxfl] = MF52(Sxfl,Safl,Fzfl,IA,para);
 [Fyrl,Fxrl] = MF52(Sxrl,Sarl,Fzrl,IA,para);
 [Fyrr,Fxrr] = MF52(Sxrr,Sarr,Fzrr,IA,para);
+% tyre bias
+ind = 0.5*(1-tanh(50*Fxfl)); % return one if Fxfl negative, zero if positive
+tyrebias = ind*Fxfl/(Fxfl+Fxrl); % left tires force always less than right in this simulation
 
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
@@ -68,3 +72,4 @@ ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 % residual control
 ax_res = ax-ax_in;
 ay_res = ay-ay_in;
+bias_res = tyrebias*(tyrebias-brakebias);
