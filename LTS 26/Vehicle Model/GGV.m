@@ -90,21 +90,22 @@ for i = 1:numel(velocityRange)
         opti.subject_to(ax_res ==0);
         opti.subject_to(ay_res ==0);
         opti.subject_to(Mz == 0);
+        if sin(theta)<0
+            opti.subject_to(bias_res ==0);
+        end
         opti.subject_to( ay-V*dpsi == 0);
         opti.subject_to(-maxSa<=Safl<=maxSa);
         opti.subject_to(-maxSa<=Safr<=maxSa);
         opti.subject_to(-maxSa<=Sarl<=maxSa);
         opti.subject_to(-maxSa<=Sarr<=maxSa);
         opti.subject_to(Fx<=Fxpwt);
-        min_Fz = 0;  % Minimum normal force (N)
+        min_Fz = 50;  % Minimum normal force (N)
         opti.subject_to(Fzfl >= min_Fz);
         opti.subject_to(Fzfr >= min_Fz);
         opti.subject_to(Fzrl >= min_Fz);
         opti.subject_to(Fzrr >= min_Fz);
-        % brake bias
-        if smoothPos(Fx) == 0
-            opti.subject_to(FminF == FminSum*brakebias);
-        end
+        opti.subject_to(Fxfl <= 0);
+        opti.subject_to(Fxfr <= 0);
         % Speed-dependent initial guess
         if V > 20
             opti.set_initial(p, maxp*0.3);  % Conservative initial guess

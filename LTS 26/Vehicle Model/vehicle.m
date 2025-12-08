@@ -26,7 +26,7 @@ delta_abs = sqrt(delta_in^2 + eps);
 sigmoid = 1/(1+exp(-k*(delta_abs-delta_margin)));
 CL = CLs*(1-sigmoid)+CLc*sigmoid;
 CD = CDs*(1-sigmoid)+CDc*sigmoid;
-ab = ab_s*(1-sigmoid)+CDc*sigmoid;
+ab = ab_s*(1-sigmoid)+ab_c*sigmoid;
 % aerodynamics
 Drag = 0.5*den*(V^2)*CD*farea;
 Lift = 0.5*den*(V^2)*CL*farea;
@@ -47,14 +47,18 @@ Fzrr = Fz+AeroR/2+latLT-longLT;
 [Fyfl,Fxfl] = MF52(Sxfl,Safl,Fzfl,IA,para);
 [Fyrl,Fxrl] = MF52(Sxrl,Sarl,Fzrl,IA,para);
 [Fyrr,Fxrr] = MF52(Sxrr,Sarr,Fzrr,IA,para);
+% estimate rolling resistance
+Fxfr = Fxfr-100;
+Fxfl = Fxfl-100;
+Fxrl = Fxrl-100;
+Fxrr = Fxrr-100;
 % tyre bias
-ind = 0.5*(1-tanh(50*Fxfl)); % return one if Fxfl negative, zero if positive
-tyrebias = ind*Fxfl/(Fxfl+Fxrl); % left tires force always less than right in this simulation
+tyrebias = Fxfl/(Fxfl+Fxrl); % left tires force always less than right in this simulation
 
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
 Fy = Fyfr*cos(delta_in)+Fyfl*cos(delta_out)+Fxfr*sin(delta_in)+Fxfl*sin(delta_out)+Fyrl+Fyrr;
-Fx = Fxfr*cos(delta_in)+Fxfl*cos(delta_out)-Fyfr*sin(delta_in)+Fyfl*sin(delta_out)+Fxrl+Fxrr;
+Fx = Fxfr*cos(delta_in)+Fxfl*cos(delta_out)-Fyfr*sin(delta_in)-Fyfl*sin(delta_out)+Fxrl+Fxrr;
 Mz = (a*(Fxfr*sin(delta_in)+Fxfl*sin(delta_out))+a*(Fyfr*cos(delta_in)+Fyfl*cos(delta_out))-b*(Fyrl+Fyrr)+d*(Fxfr*cos(delta_in)-Fxfl*cos(delta_out))/2+d*(Fxrr-Fxrl)/2+d*(Fyfl*sin(delta_out)-Fyfr*sin(delta_in))/2);
 
 % % Powertrain model
@@ -72,4 +76,4 @@ ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 % residual control
 ax_res = ax-ax_in;
 ay_res = ay-ay_in;
-bias_res = tyrebias*(tyrebias-brakebias);
+bias_res = tyrebias-brakebias;
