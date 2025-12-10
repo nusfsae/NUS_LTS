@@ -1,21 +1,35 @@
 % % Vehicle Model
 
 % % Equations of Motions
+% Load pre-computed ackerman coefficients
+load('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 % CG location and vehicle dimensions
 a = wheelbase*cg_f;
 b = wheelbase-a;
 d = track;
+% sigmoid function to replace IF-ELSE
+k = 1000;
+eps = 1e-6;
+% steering angle with ackerman
+[delta_in, delta_out] = acker(delta, [], p_inner, p_outer);
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
 % slip angles
-Safr = -delta + atan((dy+a*dpsi)/(dx+d*dpsi/2));
-Safl = -delta + atan((dy+a*dpsi)/(dx-d*dpsi/2));
+Safr = -delta_in + atan((dy+a*dpsi)/(dx+d*dpsi/2));
+Safl = -delta_out + atan((dy+a*dpsi)/(dx-d*dpsi/2));
 Sarr = atan((dy-b*dpsi)/(dx+d*dpsi/2));
 Sarl = atan((dy-b*dpsi)/(dx-d*dpsi/2));
+% aerodynamics straight/corner diff by steering
+delta_margin = 2*pi/180;
+delta_abs = sqrt(delta_in^2 + eps);
+sigmoid = 1/(1+exp(-k*(delta_abs-delta_margin)));
+CL = CLs*(1-sigmoid)+CLc*sigmoid;
+CD = CDs*(1-sigmoid)+CDc*sigmoid;
+ab = ab_s*(1-sigmoid)+ab_c*sigmoid;
 % aerodynamics
-Drag = 0.5*den*(V^2)*CDs*farea;
-Lift = 0.5*den*(V^2)*CLs*farea;
+Drag = 0.5*den*(V^2)*CD*farea;
+Lift = 0.5*den*(V^2)*CL*farea;
 AeroF = Lift*ab;
 AeroR = Lift*(1-ab);
 % normal load by mass
@@ -33,20 +47,26 @@ Fzrr = Fz+AeroR/2+latLT-longLT;
 [Fyfl,Fxfl] = MF52(Sxfl,Safl,Fzfl,IA,para);
 [Fyrl,Fxrl] = MF52(Sxrl,Sarl,Fzrl,IA,para);
 [Fyrr,Fxrr] = MF52(Sxrr,Sarr,Fzrr,IA,para);
+% estimate rolling resistance
+Fxfr = Fxfr-100;
+Fxfl = Fxfl-100;
+% tyre bias
+tyrebias = Fxfl/(Fxfl+Fxrl); % left tires force always less than right in this simulation
 
 % % Equations of Motions
 % sum of forces in vehicle fixed coordinates
-Fy = (Fyfr+Fyfl)*cos(delta)+(Fxfr+Fxfl)*sin(delta)+Fyrl+Fyrr;
-Fx = (Fxfr+Fxfl)*cos(delta)-(Fyfr+Fyfl)*sin(delta)+Fxrl+Fxrr;
-Mz = (a*(Fxfr+Fxfl)*sin(delta)+a*(Fyfr+Fyfl)*cos(delta)-b*(Fyrl+Fyrr)+d*(Fxfr-Fxfl)*cos(delta)/2+d*(Fxrr-Fxrl)/2+d*(Fyfl-Fyfr)*sin(delta)/2);
+Fy = Fyfr*cos(delta_in)+Fyfl*cos(delta_out)+Fxfr*sin(delta_in)+Fxfl*sin(delta_out)+Fyrl+Fyrr;
+Fx = Fxfr*cos(delta_in)+Fxfl*cos(delta_out)-Fyfr*sin(delta_in)-Fyfl*sin(delta_out)+Fxrl+Fxrr;
+Mz = (a*(Fxfr*sin(delta_in)+Fxfl*sin(delta_out))+a*(Fyfr*cos(delta_in)+Fyfl*cos(delta_out))-b*(Fyrl+Fyrr)+d*(Fxfr*cos(delta_in)-Fxfl*cos(delta_out))/2+d*(Fxrr-Fxrl)/2+d*(Fyfl*sin(delta_out)-Fyfr*sin(delta_in))/2);
 
 % % Powertrain model
-Fxpwt = 0.9*Ipeak*220*FDR/R;
-v_weak =86.5/3.6;
-Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
-if V>v_weak
-    Fxpwt =0.9*Ipeak*Iweak*FDR/R;
-end
+% Fxpwt = 0.6*Ipeak*220*FDR/R;
+% v_weak =86.5/3.6;
+% Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
+% if V>v_weak
+%     Fxpwt =0.6*Ipeak*Iweak*FDR/R;
+% end
+Ppwt = (Fxrl+Fxrr)*V;
 
 % accelerations in path tangential coordinates
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));
@@ -55,3 +75,4 @@ ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 % residual control
 ax_res = ax-ax_in;
 ay_res = ay-ay_in;
+bias_res = tyrebias-brakebias;
