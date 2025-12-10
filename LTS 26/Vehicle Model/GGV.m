@@ -18,15 +18,15 @@ opts = struct();
 opts.print_time = false;
 opts.ipopt.print_level = 5;
 opts.ipopt.tol = 1e-6;
-opts.ipopt.acceptable_tol = 1e-4;
+opts.ipopt.acceptable_tol = 1e-6;           
 opts.ipopt.acceptable_iter = 15;
-opts.ipopt.max_iter = 3000;
+opts.ipopt.max_iter = 5000;
 
 
 % % Mesh Discretization
 v_min = 10;                          % minimum speed for GG calculation (m/s)
 v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
-mass = car+driver;               % vehicle mass (kg)
+mass = car+driver;                   % vehicle mass (kg)
 Vnum = 30;                           % number of speed variations
 Gnum = 20;                           % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
@@ -90,7 +90,7 @@ for i = 1:numel(velocityRange)
         opti.subject_to(ax_res ==0);
         opti.subject_to(ay_res ==0);
         opti.subject_to(Mz == 0);
-        if sin(theta)<0
+        if sin(theta)<0.2
             opti.subject_to(bias_res ==0);
         end
         opti.subject_to( ay-V*dpsi == 0);
@@ -98,7 +98,8 @@ for i = 1:numel(velocityRange)
         opti.subject_to(-maxSa<=Safr<=maxSa);
         opti.subject_to(-maxSa<=Sarl<=maxSa);
         opti.subject_to(-maxSa<=Sarr<=maxSa);
-        opti.subject_to(Fx<=Fxpwt);
+        % opti.subject_to(Fx<=Fxpwt);
+        opti.subject_to(Ppwt<=80000);
         min_Fz = 50;  % Minimum normal force (N)
         opti.subject_to(Fzfl >= min_Fz);
         opti.subject_to(Fzfr >= min_Fz);

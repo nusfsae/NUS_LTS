@@ -45,14 +45,14 @@ ab_s = 0.549;                        % aero balance straight line (front)
 % Powertrain Settings 
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.36;                          % final drive ratio (-)
-Ipeak = 0.6*0.8;                         % power percentage (-)
+Ipeak = 0.8;                         % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
 endurance = 'Endurance.mat';
 skidpad = 'Skidpad.mat';
 acceleration = 'Acceleration.mat';
 % Rolling/Standing start
-static = false;
+static = true;
 
 figure
 
@@ -60,7 +60,7 @@ figure
 GGV;
 
 %% initialize/reset simulation results
-load(endurance);
+load(acceleration);
 num = length(C2);
 sim = struct();
 

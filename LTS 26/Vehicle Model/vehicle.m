@@ -50,8 +50,6 @@ Fzrr = Fz+AeroR/2+latLT-longLT;
 % estimate rolling resistance
 Fxfr = Fxfr-100;
 Fxfl = Fxfl-100;
-Fxrl = Fxrl-100;
-Fxrr = Fxrr-100;
 % tyre bias
 tyrebias = Fxfl/(Fxfl+Fxrl); % left tires force always less than right in this simulation
 
@@ -62,12 +60,13 @@ Fx = Fxfr*cos(delta_in)+Fxfl*cos(delta_out)-Fyfr*sin(delta_in)-Fyfl*sin(delta_ou
 Mz = (a*(Fxfr*sin(delta_in)+Fxfl*sin(delta_out))+a*(Fyfr*cos(delta_in)+Fyfl*cos(delta_out))-b*(Fyrl+Fyrr)+d*(Fxfr*cos(delta_in)-Fxfl*cos(delta_out))/2+d*(Fxrr-Fxrl)/2+d*(Fyfl*sin(delta_out)-Fyfr*sin(delta_in))/2);
 
 % % Powertrain model
-Fxpwt = 0.6*Ipeak*220*FDR/R;
-v_weak =86.5/3.6;
-Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
-if V>v_weak
-    Fxpwt =0.6*Ipeak*Iweak*FDR/R;
-end
+% Fxpwt = 0.6*Ipeak*220*FDR/R;
+% v_weak =86.5/3.6;
+% Iweak = ((220-0)/(v_weak-v_max))*V+220-((220-0)/(v_weak-v_max))*v_weak; 
+% if V>v_weak
+%     Fxpwt =0.6*Ipeak*Iweak*FDR/R;
+% end
+Ppwt = (Fxrl+Fxrr)*V;
 
 % accelerations in path tangential coordinates
 ax = (1/mass * (Fy*sin(beta) + Fx*cos(beta) - Drag));

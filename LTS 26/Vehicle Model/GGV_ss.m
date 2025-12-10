@@ -46,11 +46,32 @@ maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 % % IPOPT Settings
 opts = struct();
 opts.print_time = false;
+
 opts.ipopt.print_level = 5;
 opts.ipopt.tol = 1e-6;
-opts.ipopt.acceptable_tol = 1e-4;           
+opts.ipopt.acceptable_tol = 1e-6;           
 opts.ipopt.acceptable_iter = 15;
-opts.ipopt.max_iter = 3000;
+opts.ipopt.max_iter = 5000;
+
+% trust region setting
+% 1. Relax bounds slightly
+% opts.ipopt.bound_relax_factor = 1e-4;  % Increase from 1e-8 (more relaxed)
+% 
+% 2. More aggressive constraint violation tolerance
+% opts.ipopt.constr_viol_tol = 1e-4;     % Allow more violation initially
+% opts.ipopt.acceptable_constr_viol_tol = 1e-4;
+% 
+% 3. Feasibility restoration phase
+% opts.ipopt.expect_infeasible_problem = 'yes';  % Prepare for infeasibility
+% opts.ipopt.required_infeasibility_reduction = 0.9;  % Default: 0.9
+% opts.ipopt.max_resto_iter = 3000000;   % Max restoration iterations
+% 
+% 5. Filter method (helps with infeasible problems)
+% opts.ipopt.filter_margin_fact = 1e-5;  % Default: 1e-5
+% opts.ipopt.filter_max_margin = 1;      % Default: 1
+% 
+% opti.solver('ipopt', opts);
+
 
 % % Mesh Discretization
 Gnum = 30;       
@@ -61,7 +82,7 @@ GG = struct();
 
 %%
 % % Steady State Speed Setting
-V = 20; 
+V = 10; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -108,7 +129,7 @@ for j = 1:numel(AngleRange)
     % define constraints
     opti.subject_to(ax_res ==0);
     opti.subject_to(ay_res ==0);
-    if sin(theta)<0
+    if sin(theta)<0.2
         opti.subject_to(bias_res ==0);
     end    
     opti.subject_to(Mz == 0);
@@ -117,7 +138,8 @@ for j = 1:numel(AngleRange)
     opti.subject_to(-maxSa<=Safr<=maxSa);
     opti.subject_to(-maxSa<=Sarl<=maxSa);
     opti.subject_to(-maxSa<=Sarr<=maxSa);
-    opti.subject_to(Fx<=Fxpwt);
+    % opti.subject_to(Fx<=Fxpwt);
+    opti.subject_to(Ppwt<=80000);
     min_Fz = 50;  % Minimum normal force (N)
     opti.subject_to(Fzfl >= min_Fz);
     opti.subject_to(Fzfr >= min_Fz);

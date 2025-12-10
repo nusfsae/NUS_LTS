@@ -14,7 +14,7 @@ for i = 1:length(C2)
 end
 % check rolling start
 if static == true
-    sim.speed(1) = 0;
+    sim.speed(end) = 0;
 end
 % accelerate
 for i = 1:length(C2)-1
