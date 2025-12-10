@@ -1,5 +1,15 @@
 % validation
 
+% results from 2 models
+figure
+plot(dist,sim.speed*3.6,'DisplayName','LTS26');
+xlabel("Distance (m)")
+ylabel("Speed (km/h)")
+sgtitle("Speed Profile")
+hold on 
+plot(dist,lts25.speed*3.6,'DisplayName','LTS25')
+legend('FontSize',16);
+
 % Load data from MoTec
 motec8 = load('Endurance 25 fastest.mat');
 speed8 = motec8.Corr_Speed.Value;
@@ -14,11 +24,8 @@ end
 accel8(length(speed8)) = accel8(length(speed8)-1);
 
 % Compare speed
-figure
-plot(distance8,speed8,'DisplayName', 'Khai');
-xlabel("Distance (m)")
-ylabel("Speed (km/h)")
+plot(distance8,speed8,'DisplayName', '25 Endurance Best Lap');
+xlabel("Distance (m)",'FontSize',14)
+ylabel("Speed (km/h)",'FontSize',14)
 ylim([0 130])
 sgtitle("Speed Profile Validation")
-hold on
-plot(dist,sim.speed*3.6,'DisplayName', 'Sim');

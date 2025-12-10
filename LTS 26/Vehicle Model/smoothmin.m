@@ -1,7 +1,7 @@
 % Smoothen mininum function for linearity
 % x,y:variables to compare
 % alpha: lower value for accuracy
-function ymin = smoothmin(x,y,alpha)
+function ymin = smoothmin(x,y)
 
 % works when x,y are close
 % ymin =0.5*(x + y) - (1/(2*alpha)) * log(cosh(alpha*(x - y)));
@@ -13,5 +13,6 @@ function ymin = smoothmin(x,y,alpha)
 % ymin = -(1/alpha) * log(exp(-alpha*x) + exp(-alpha*y));
 
 % this works the best
+alpha = 0.01;
 ymin =(x + y - sqrt((y-x).^2 + alpha))./2;
 end
