@@ -36,7 +36,7 @@ PMaxLimit = 80;                      % power limit (KW)
 maxp = 30;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
-maxBeta = deg2rad(20);               % maximum body slip (deg)
+maxBeta = deg2rad(25);               % maximum body slip (deg)
 maxSxfr = 0.1;                       % maximum front right slip ratio (-)
 maxSxfl = 0.1;                       % maximum front left slip ratio (-)
 maxSxrr = 0.1;                       % maximum rear right slip ratio (-)
@@ -46,31 +46,19 @@ maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 % % IPOPT Settings
 opts = struct();
 opts.print_time = false;
-
 opts.ipopt.print_level = 5;
-opts.ipopt.tol = 1e-6;
-opts.ipopt.acceptable_tol = 1e-6;           
-opts.ipopt.acceptable_iter = 15;
-opts.ipopt.max_iter = 5000;
+% termination option
+opts.ipopt.tol = 1e-5;
+opts.ipopt.acceptable_tol = 1e-3; 
+opts.ipopt.dual_inf_tol = 1e-3;
+opts.ipopt.max_iter = 6000;
+opts.ipopt.acceptable_iter = 10;
+% barrier strategy option
+opts.ipopt.mu_strategy = 'adaptive';
+opts.ipopt.mu_init = 1e-2;
+% linear solver option
+% opts.ipopt.linear_solver = 'ma57'; % how to use?
 
-% trust region setting
-% 1. Relax bounds slightly
-% opts.ipopt.bound_relax_factor = 1e-4;  % Increase from 1e-8 (more relaxed)
-% 
-% 2. More aggressive constraint violation tolerance
-% opts.ipopt.constr_viol_tol = 1e-4;     % Allow more violation initially
-% opts.ipopt.acceptable_constr_viol_tol = 1e-4;
-% 
-% 3. Feasibility restoration phase
-% opts.ipopt.expect_infeasible_problem = 'yes';  % Prepare for infeasibility
-% opts.ipopt.required_infeasibility_reduction = 0.9;  % Default: 0.9
-% opts.ipopt.max_resto_iter = 3000000;   % Max restoration iterations
-% 
-% 5. Filter method (helps with infeasible problems)
-% opts.ipopt.filter_margin_fact = 1e-5;  % Default: 1e-5
-% opts.ipopt.filter_max_margin = 1;      % Default: 1
-% 
-% opti.solver('ipopt', opts);
 
 
 % % Mesh Discretization
@@ -82,7 +70,7 @@ GG = struct();
 
 %%
 % % Steady State Speed Setting
-V = 10; 
+V = 30; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -129,8 +117,8 @@ for j = 1:numel(AngleRange)
     % define constraints
     opti.subject_to(ax_res ==0);
     opti.subject_to(ay_res ==0);
-    if sin(theta)<0.2
-        opti.subject_to(bias_res ==0);
+    if sin(theta)<-0.2
+        opti.subject_to(0.99<=bias_res<=1.01);
     end    
     opti.subject_to(Mz == 0);
     opti.subject_to(ay-V*dpsi == 0);
@@ -149,7 +137,7 @@ for j = 1:numel(AngleRange)
     opti.subject_to(Fxfr <= 0);
     % Speed-dependent initial guess
     if V > 20 
-        opti.set_initial(p, maxp*0.3);  % Conservative initial guess
+        opti.set_initial(p, maxp*0.6);  % Conservative initial guess
     else
         opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
     end

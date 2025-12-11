@@ -75,4 +75,4 @@ ay = (1/mass * (Fy*cos(beta) - Fx*sin(beta)));
 % residual control
 ax_res = ax-ax_in;
 ay_res = ay-ay_in;
-bias_res = tyrebias-brakebias;
+bias_res = tyrebias/brakebias;
