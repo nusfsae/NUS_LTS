@@ -41,7 +41,7 @@ longLT = Fz*(ax_in/9.81)*cg_h/wheelbase;
 Fzfl = Fz+AeroF/2-latLT-longLT;
 Fzfr = Fz+AeroF/2+latLT-longLT;
 Fzrl = Fz+AeroR/2-latLT+longLT;
-Fzrr = Fz+AeroR/2+latLT-longLT;
+Fzrr = Fz+AeroR/2+latLT+longLT;
 % tire forces
 [Fyfr,Fxfr] = MF52(Sxfr,Safr,Fzfr,IA,para);
 [Fyfl,Fxfl] = MF52(Sxfl,Safl,Fzfl,IA,para);

@@ -3,10 +3,10 @@
 import casadi.*
 
 % % Bounds for Path Constraints
-maxp = 20;                           % maximum radius of GG diagram (m/s^2)
+maxp = 30;                           % maximum radius of GG diagram (m/s^2)
 maxDelta = del_max;                  % maximum steering angle (rad)
 maxSa = deg2rad(10);                 % maximum slip angle (deg)
-maxBeta = deg2rad(20);               % maximum body slip (deg)
+maxBeta = deg2rad(25);               % maximum body slip (deg)
 maxSxfr = 0.1;                       % maximum front right slip ratio (-)
 maxSxfl = 0.1;                       % maximum front left slip ratio (-)
 maxSxrr = 0.1;                       % maximum rear right slip ratio (-)
@@ -16,11 +16,16 @@ maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 % % IPOPT Settings
 opts = struct();
 opts.print_time = false;
-opts.ipopt.print_level = 1;
-opts.ipopt.tol = 1e-6;
-opts.ipopt.acceptable_tol = 1e-6;           
-opts.ipopt.acceptable_iter = 15;
-opts.ipopt.max_iter = 5000;
+opts.ipopt.print_level = 0;
+% termination option
+opts.ipopt.tol = 1e-5;
+opts.ipopt.acceptable_tol = 1e-3; 
+opts.ipopt.dual_inf_tol = 1e-3;
+opts.ipopt.max_iter = 6000;
+opts.ipopt.acceptable_iter = 10;
+% barrier strategy option
+opts.ipopt.mu_strategy = 'adaptive';
+opts.ipopt.mu_init = 1e-2;
 
 
 % % Mesh Discretization
@@ -28,7 +33,7 @@ v_min = 10;                          % minimum speed for GG calculation (m/s)
 v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 mass = car+driver;                   % vehicle mass (kg)
 Vnum = 30;                           % number of speed variations
-Gnum = 20;                           % number of combine ax/ay variations
+Gnum = 60;                           % number of combine ax/ay variations
 velocityRange = linspace(v_min,v_max-5, Vnum); % Discrete Velocity Points
 failcount = 0;                       % number of failure in optimization
 
@@ -90,8 +95,8 @@ for i = 1:numel(velocityRange)
         opti.subject_to(ax_res ==0);
         opti.subject_to(ay_res ==0);
         opti.subject_to(Mz == 0);
-        if sin(theta)<0.2
-            opti.subject_to(bias_res ==0);
+        if sin(theta)<-0.2
+            opti.subject_to(0.99<=bias_res<=1.01);
         end
         opti.subject_to( ay-V*dpsi == 0);
         opti.subject_to(-maxSa<=Safl<=maxSa);
@@ -108,11 +113,11 @@ for i = 1:numel(velocityRange)
         opti.subject_to(Fxfl <= 0);
         opti.subject_to(Fxfr <= 0);
         % Speed-dependent initial guess
-        if V > 20
-            opti.set_initial(p, maxp*0.3);  % Conservative initial guess
-        else
-            opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
-        end
+        % if V > 25
+        %     opti.set_initial(p, maxp*0.6);  % Conservative initial guess
+        % else
+        opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
+        % end
         % optimization results
         opti.solver('ipopt', opts);
         % objective

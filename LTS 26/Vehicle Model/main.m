@@ -26,7 +26,7 @@ del_max = 0.565;                     % maximum steering angle (rad)
 R = 0.2032;                          % wheel radius (m)
 P = 9;                               % tire pressue (psi)
 IA = 0;                              % inclination angle (rad)
-brakebias = 0.62;                    % brake bias
+brakebias = 0.67;                    % brake bias
 % Ackerman Settings
 AckSource = readmatrix("ackerman.xlsx");   
 [~, ~, p_inner, p_outer] = acker([], AckSource);
@@ -45,7 +45,7 @@ ab_s = 0.549;                        % aero balance straight line (front)
 % Powertrain Settings 
 max_rpm = 5500;                      % maximum wheel speed (rpm)
 FDR = 3.36;                          % final drive ratio (-)
-Ipeak = 0.8;                         % power percentage (-)
+Ipeak = 1  ;                         % power percentage (-)
 PMaxLimit = 80;                      % power limit (KW)
 % Race Track
 endurance = 'Endurance.mat';
@@ -54,13 +54,11 @@ acceleration = 'Acceleration.mat';
 % Rolling/Standing start
 static = true;
 
-figure
-
 %% run performance envelope
 GGV;
 
 %% initialize/reset simulation results
-load(acceleration);
+load(endurance);
 num = length(C2);
 sim = struct();
 

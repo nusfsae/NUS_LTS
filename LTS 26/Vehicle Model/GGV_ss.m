@@ -3,7 +3,8 @@ addpath(genpath(cd))
 import casadi.*
 
 % Chassis Settings
-mass = 262;                          % vehicle mass (kg)
+car = 199.6;                         % vehicle mass (kg)
+driver = 65;                         % driver mass (kg)
 track = 1.21;                        % track width (m)
 cg_f = 0.5095;                       % mass bias to front (-)
 wheelbase = 1.531;                   % wheelbase (m)
@@ -14,6 +15,10 @@ R = 0.2032;                          % wheel radius (m)
 P = 9;                               % tire pressue (psi)
 IA = 0;                              % inclination angle (rad)
 brakebias = 0.67;                    % brake bias
+% Ackerman Settings
+AckSource = readmatrix("ackerman.xlsx");   
+[~, ~, p_inner, p_outer] = acker([], AckSource);
+save('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 % Tyre Settings
 para = H1675;                        % tire selection
 % Aerodynamics Settings
@@ -46,7 +51,7 @@ maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 % % IPOPT Settings
 opts = struct();
 opts.print_time = false;
-opts.ipopt.print_level = 5;
+opts.ipopt.print_level = 0;
 % termination option
 opts.ipopt.tol = 1e-5;
 opts.ipopt.acceptable_tol = 1e-3; 
@@ -70,7 +75,7 @@ GG = struct();
 
 %%
 % % Steady State Speed Setting
-V = 30; 
+V = 24.36; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -136,11 +141,11 @@ for j = 1:numel(AngleRange)
     opti.subject_to(Fxfl <= 0);
     opti.subject_to(Fxfr <= 0);
     % Speed-dependent initial guess
-    if V > 20 
-        opti.set_initial(p, maxp*0.6);  % Conservative initial guess
-    else
-        opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
-    end
+    % if V > 25 
+    %     opti.set_initial(p, maxp*0.6);  % Conservative initial guess
+    % else
+    opti.set_initial(p, maxp*0.9);  % Aggressive for low speed
+    % end
     % optimization results
     opti.solver('ipopt', opts);
     % objective
