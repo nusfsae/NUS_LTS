@@ -13,7 +13,7 @@ function [Fx, Fy] = MFrelation(tirParams, Fz, kappa, alpha, gamma, Vcx, p)
     ukappaLow = kappa;
     ualpha = alpha;
     ugamma = gamma;
-    % uphit = phit;
+    % uphit = ph%it;
     uVcx = Vcx;
 
     if useLimitsCheck
@@ -276,7 +276,7 @@ function [Fx, Fy] = MFrelation(tirParams, Fz, kappa, alpha, gamma, Vcx, p)
 
     [Fx0, mux] = pureLong(Fz, kappa, gamma, LMUX_star, LMUX_prime, isLowSpeed, reductionSmooth, epsilonx);
     [Fx] = combLong(Fx0, gamma_star, kappa, alpha_star);
-    [Fy] = combLat(Fz0, Fz, Fx, alpha, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, epsilonx,  mux, reductionSmooth);
+    [Fy] = combLat(Fz0, Fz, Fx, alpha, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, epsilonx,  mux, reductionSmooth, isLowSpeed);
 
 
     % Fx0 pure longitudinal slip
@@ -386,7 +386,7 @@ function [Fx, Fy] = MFrelation(tirParams, Fz, kappa, alpha, gamma, Vcx, p)
         
     end
 
-     function [Fy0,Kya,Kyg0] = pureLat(Fz0, Fz, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth) 
+     function [Fy0,Kya,Kyg0] = pureLat(Fz, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth, isLowSpeed) 
         %[SCALING_COEFFICIENTS]
         LCY   = tirParams.LCY   ; % Scale factor of Fy shape factor
         LEY   = tirParams.LEY   ; % Scale factor of Fy curvature factor
@@ -474,9 +474,9 @@ function [Fx, Fy] = MFrelation(tirParams, Fz, kappa, alpha, gamma, Vcx, p)
     end
 
     % Fy combined slip condition with Fx as input variable
-    function [Fy] = combLat(Fz0, Fz, Fx, alpha, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, epsilonx, mux, reductionSmooth)
-        [~ , mux0] = pureLong(Fz0, kappa, gamma, LMUX_star, LMUX_prime, isLowSpeed, reductionSmooth, epsilonx);
-        [~, Kya, Kyg0] = pureLat(Fz0, Fz, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth);
+    function [Fy] = combLat(Fz0, Fz, Fx, alpha, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, epsilonx, mux, reductionSmooth, isLowSpeed)
+        [~ , mux0] = pureLong(Fz0, kappa, gamma, LMUX_star, LMUX_prime, isLowSpeed, reductionSmooth, epsilonx); % to get the friction coefficient at nominal wheel load
+        [~, Kya, Kyg0] = pureLat(Fz, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth, isLowSpeed);
         phix = (mux^2 * Fz^2 - Fx^2)^0.5 / (mux * Fz); % (4.41 page 163), friction coefficient for muy = mux
         phixa = sqrt(1 - (Fx/(mux*Fz))^2); % (4.42a page 164), where n in [2,8]
 
@@ -484,7 +484,7 @@ function [Fx, Fy] = MFrelation(tirParams, Fz, kappa, alpha, gamma, Vcx, p)
         Cfg = phix^2 * Kyg0; % (4.43 page 164)
 
         alpha_eq = 1/phix * (Cfa/Kya)*(mux0*Fz0)/(mux*Fz)*(alpha+(Cfg/Cfa)); % (4.46 page 164)
-        [Fy0eq, ~, ~] = pureLat(Fz0, alpha_eq, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth);
+        [Fy0eq, ~, ~] = pureLat(Fz0, alpha_eq, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth, isLowSpeed);
         Fy = phix * (mux*Fz)/(mux0*Fz0)*Fy0eq; % (4.45 page 164)
 
     end

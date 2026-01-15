@@ -475,7 +475,7 @@ function [Fx, Fy] = MFrelation(tirParams, Fz, kappa, alpha, gamma, Vcx, p)
 
     % Fy combined slip condition with Fx as input variable
     function [Fy] = combLat(Fz0, Fz, Fx, alpha, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, epsilonx, mux, reductionSmooth, isLowSpeed)
-        [~ , mux0] = pureLong(Fz0, kappa, gamma, LMUX_star, LMUX_prime, isLowSpeed, reductionSmooth, epsilonx);
+        [~ , mux0] = pureLong(Fz0, kappa, gamma, LMUX_star, LMUX_prime, isLowSpeed, reductionSmooth, epsilonx); % to get the friction coefficient at nominal wheel load
         [~, Kya, Kyg0] = pureLat(Fz, alpha_star, gamma_star, LMUY_star, LMUY_prime, epsilonk, epsilony, reductionSmooth, isLowSpeed);
         phix = (mux^2 * Fz^2 - Fx^2)^0.5 / (mux * Fz); % (4.41 page 163), friction coefficient for muy = mux
         phixa = sqrt(1 - (Fx/(mux*Fz))^2); % (4.42a page 164), where n in [2,8]
