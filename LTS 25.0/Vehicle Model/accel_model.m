@@ -12,6 +12,18 @@ cd ('D:\Patrick\VD SIM\LTS25\Tyre Model')
 tyre = 'R25B_V2';
 load(tyre)
 
+% parameter
+
+R = 0.2032;%wheel radius
+mass = 276;
+air_density = 1.293;
+frontel_area = 1.119492;
+coef_drag = 1.619549;
+coef_lift = 4.224138;%positive means downforce here
+tyre_model = fit10psi; %select tyre with desired pressure
+camber = 0;
+FDR = 3.36;
+
 
 [accel_profile,w_profile,throttle,a_profile,sr,lol,ff] = acc(R,dist,mass,0,0,tyre_model,air_density,frontel_area,coef_lift,coef_drag,FDR);
 figure
