@@ -1,0 +1,113 @@
+function tyre= outputTyre()
+%% tyre parameters (H16x7.5-R20)
+
+% Nominal Conditions
+tyre.p0  = 84000;   % nominal pressure (Pa)
+tyre.FZ0 = 1080;    % nominal load (N)
+
+% Scaling Coefficients
+tyre.LFZO  = 1;
+tyre.LGAY  = 1;
+tyre.LCX   = 1;
+tyre.LMUX  = 1;
+tyre.LEX   = 1;
+tyre.LKX   = 1;
+tyre.LHX   = 1;
+tyre.LVX   = 0;      % set to 0 due to oddities
+tyre.LCY   = 1;
+tyre.LGX   = 1;
+tyre.LMUY  = 1;
+tyre.LEY   = 1;
+tyre.LKY   = 1;
+tyre.LHY   = 1;
+tyre.LVY   = 1;
+tyre.LTR   = 1;
+tyre.LRES  = 1;
+tyre.LXAL  = 1;
+tyre.LYKA  = 1;
+tyre.LVYKA = 1;
+tyre.LS    = 1;
+tyre.LKYC  = 1;
+tyre.LKZC  = 1;
+tyre.LVMX  = 1;
+tyre.LMX   = 1;
+tyre.LMY   = 1;
+tyre.LMP   = 1;
+
+% Longitudinal Coefficients
+tyre.PCX1 = 1.5;
+tyre.PDX1 = 2.4722;
+tyre.PDX2 = -0.78691;
+tyre.PDX3 = 15;
+tyre.PEX1 = -2.5811e-13;
+tyre.PEX2 = -0.87477;
+tyre.PEX3 = -0.6;
+tyre.PEX4 = 0.9;
+tyre.PKX1 = 42.8193;
+tyre.PKX2 = -0.0001749;
+tyre.PKX3 = -0.49011;
+tyre.PHX1 = 0.00093775;
+tyre.PHX2 = -0.0013228;
+tyre.PVX1 = -0.02779;
+tyre.PVX2 = 0.089387;
+tyre.PPX1 = -1.0177;
+tyre.PPX2 = -1.3151;
+tyre.PPX3 = -0.2709;
+tyre.PPX4 = 0.81854;
+tyre.RBX1 = 5;
+tyre.RBX2 = 5;
+tyre.RBX3 = 0;
+tyre.RCX1 = 1;
+tyre.REX1 = -1;
+tyre.REX2 = -0.1;
+tyre.RHX1 = 0;
+
+% Lateral Coefficients
+tyre.PCY1 = 1.5;
+tyre.PDY1 = 2.5764;
+tyre.PDY2 = -0.47966;
+tyre.PDY3 = 1.2505;
+tyre.PEY1 = 0.44562;
+tyre.PEY2 = -0.15927;
+tyre.PEY3 = 0.055312;
+tyre.PEY4 = 11.0271;
+tyre.PEY5 = 166.589;
+tyre.PKY1 = -34.4974;
+tyre.PKY2 = 1.369;
+tyre.PKY3 = 0.60632;
+tyre.PKY4 = 2;
+tyre.PKY5 = 83.7446;
+tyre.PKY6 = -4.1081;
+tyre.PKY7 = -0.79828;
+tyre.PHY1 = 0.0036805;
+tyre.PHY2 = 0.0016442;
+tyre.PHY3 = 0.1416;   % filled heuristically
+tyre.PVY1 = 0.067909;
+tyre.PVY2 = 0.016368;
+tyre.PVY3 = 0.52062;
+tyre.PVY4 = -3.3053;
+tyre.PPY1 = 0.42092;
+tyre.PPY2 = 1.1945;
+tyre.PPY3 = -0.33642;
+tyre.PPY4 = -0.52307;
+tyre.PPY5 = -1.0699;
+tyre.RBY1 = 5; 
+tyre.RBY2 = 2;
+tyre.RBY3 = 0.02;
+tyre.RBY4 = 0;
+tyre.RCY1 = 1;
+tyre.REY1 = -0.1;
+tyre.REY2 = 0.1;
+tyre.RHY1 = 0;
+tyre.RHY2 = 0;
+tyre.RVY1 = 0;
+tyre.RVY2 = 0;
+tyre.RVY3 = 0;
+tyre.RVY4 = 0;
+tyre.RVY5 = 0;
+tyre.RVY6 = 0;
+
+
+
+
+end
