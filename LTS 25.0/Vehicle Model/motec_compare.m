@@ -3,7 +3,7 @@
 cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Vehicle Model')
 
 run control_panel;
-
+%%
 
 % Load data from MoTec
 %cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\NUS_LTS-main\LTS 25.0\Motec Data')
@@ -55,7 +55,7 @@ accel8(length(speed8)) = accel8(length(speed8)-1);
 
 % Compare speed
 figure
-plot(distance8,speed8,'DisplayName', 'Khai');
+plot(distance8,speed8,'DisplayName', 'R25e Endurance');
 xlabel("Distance (m)")
 ylabel("Speed (km/h)")
 ylim([0 130])
@@ -67,9 +67,9 @@ sgtitle("Speed Profile Validation")
 
 %hold on
 %plot(distance8,speed6,'DisplayName', 'MoTec Data 3');
- 
+sim1 = sim; 
 hold on
-plot(dist,sim.speed*3.6,'DisplayName', 'Sim');
+plot(dist,sim1.speed*3.6,'DisplayName', 'LTS25');
 
 legend
 
@@ -87,3 +87,9 @@ legend
 %hold on
 %plot(dist1,lapsetime,'DisplayName', 'Simulation Data')
 %legend
+
+%%
+cd('C:\Users\PC5\Documents\Patrick\FSAE LTS\Github\NUS_LTS\LTS 26\Vehicle Model')
+run main
+hold on 
+plot(dist,sim.speed*3.6, 'DisplayName', 'LTS26');

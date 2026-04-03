@@ -2,7 +2,7 @@
 
 % % Equations of Motions
 % Load pre-computed ackerman coefficients
-load('ackerman_coeffs.mat', 'p_inner', 'p_outer');
+% load('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 % CG location and vehicle dimensions
 a = wheelbase*cg_f;
 b = wheelbase-a;
@@ -11,7 +11,9 @@ d = track;
 k = 1000;
 eps = 1e-6;
 % steering angle with ackerman
-[delta_in, delta_out] = acker(delta, [], p_inner, p_outer);
+% [delta_in, delta_out] = acker(delta, [], p_inner, p_outer);
+delta_in = delta;
+delta_out = delta;
 % velocities in vehicle fixed coordinates
 dx = V*cos(beta);
 dy = V*sin(beta);
@@ -41,7 +43,7 @@ longLT = Fz*(ax_in/9.81)*cg_h/wheelbase;
 Fzfl = Fz+AeroF/2-latLT-longLT;
 Fzfr = Fz+AeroF/2+latLT-longLT;
 Fzrl = Fz+AeroR/2-latLT+longLT;
-Fzrr = Fz+AeroR/2+latLT-longLT;
+Fzrr = Fz+AeroR/2+latLT+longLT;
 % tire forces
 [Fyfr,Fxfr] = MF52(Sxfr,Safr,Fzfr,IA,para);
 [Fyfl,Fxfl] = MF52(Sxfl,Safl,Fzfl,IA,para);

@@ -31,6 +31,10 @@ FDR = 3.36;                          % final drive ratio (-)
 Ipeak = 1;                           % power percentage (-)               
 v_max = (max_rpm/FDR)*pi*2*R/60;     % maximum speed (m/s)
 PMaxLimit = 80;                      % power limit (KW)
+% Ackerman Settings
+% AckSource = readmatrix("ackerman.xlsx");   
+% [~, ~, p_inner, p_outer] = acker([], AckSource);
+% save('ackerman_coeffs.mat', 'p_inner', 'p_outer');
 
 % % Bounds for Path Constraints
 maxp = 30;                           % maximum radius of GG diagram (m/s^2)
@@ -47,31 +51,11 @@ maxDpsi = deg2rad(180);              % maximum yaw rate (deg/s)
 opts = struct();
 opts.print_time = false;
 
-opts.ipopt.print_level = 5;
+opts.ipopt.print_level = 0;
 opts.ipopt.tol = 1e-6;
 opts.ipopt.acceptable_tol = 1e-6;           
 opts.ipopt.acceptable_iter = 15;
 opts.ipopt.max_iter = 5000;
-
-% trust region setting
-% 1. Relax bounds slightly
-% opts.ipopt.bound_relax_factor = 1e-4;  % Increase from 1e-8 (more relaxed)
-% 
-% 2. More aggressive constraint violation tolerance
-% opts.ipopt.constr_viol_tol = 1e-4;     % Allow more violation initially
-% opts.ipopt.acceptable_constr_viol_tol = 1e-4;
-% 
-% 3. Feasibility restoration phase
-% opts.ipopt.expect_infeasible_problem = 'yes';  % Prepare for infeasibility
-% opts.ipopt.required_infeasibility_reduction = 0.9;  % Default: 0.9
-% opts.ipopt.max_resto_iter = 3000000;   % Max restoration iterations
-% 
-% 5. Filter method (helps with infeasible problems)
-% opts.ipopt.filter_margin_fact = 1e-5;  % Default: 1e-5
-% opts.ipopt.filter_max_margin = 1;      % Default: 1
-% 
-% opti.solver('ipopt', opts);
-
 
 % % Mesh Discretization
 Gnum = 30;       
@@ -82,7 +66,7 @@ GG = struct();
 
 %%
 % % Steady State Speed Setting
-V = 10; 
+V = 16; 
 % empty array for ay
 GG.ay = zeros(1, Gnum);
 % Range of ax/ay combinations
@@ -147,6 +131,7 @@ for j = 1:numel(AngleRange)
     opti.subject_to(Fzrr >= min_Fz);
     opti.subject_to(Fxfl <= 0);
     opti.subject_to(Fxfr <= 0);
+
     % Speed-dependent initial guess
     if V > 20 
         opti.set_initial(p, maxp*0.3);  % Conservative initial guess
@@ -216,8 +201,8 @@ end
 %%
 figure
 plot(GG.ay,GG.ax,'y','DisplayName', 'GGV');
-xlabel("ax",'FontSize',14)
-ylabel("ay",'FontSize',14)
+xlabel("ay",'FontSize',14)
+ylabel("ax",'FontSize',14)
 legend
 
 fprintf("Number of optimization failure: %d \n", failcount);

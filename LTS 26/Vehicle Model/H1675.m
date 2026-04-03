@@ -1,4 +1,4 @@
-function settings = Hoosier16x75(settings)
+function settings = H1675(settings)
 
 % Nominal Conditions
 settings.Tyre.p0  = 84000        ;  % Nominal pressure in Pa [Not used in MF5.2]   

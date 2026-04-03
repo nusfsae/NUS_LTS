@@ -108,3 +108,16 @@ mass = 199.7+66;
 Fsum = lat*mass;
 % read tire force from tire graph
 cf = Fsum/(4*1800)
+
+
+%% find grip factor with new tire function
+Fz = 1000;
+kappa = 0;
+alpha = deg2rad(10);
+gamma = 0;
+Vcx = 10;
+pres = 9;
+
+tirParams = 
+
+[Fx, Fy] = SM_MF61(Fz, kappa, alpha, gamma, Vcx, pres, tirParams) 
